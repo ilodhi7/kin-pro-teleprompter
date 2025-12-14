@@ -434,7 +434,50 @@
     justify-content: center;
     flex-wrap: wrap;
 }
-    </style>
+    
+.input-select {
+    padding: 0.6rem 0.75rem;
+    background: #374151;
+    color: white;
+    border: 1px solid #4b5563;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border: 1px solid #374151;
+    background: rgba(31, 41, 55, 0.7);
+    color: #d1d5db;
+}
+
+.badge.off {
+    border-color: rgba(220, 38, 38, 0.6);
+    color: #fecaca;
+}
+
+.badge.on {
+    border-color: rgba(16, 185, 129, 0.6);
+    color: #bbf7d0;
+}
+
+.camera-off-notice {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px dashed #4b5563;
+    color: #d1d5db;
+    background: rgba(17, 24, 39, 0.5);
+    font-size: 0.875rem;
+}
+
+</style>
 </head>
 <body>
     <div class="setup-screen" id="setupScreen">
@@ -462,7 +505,7 @@
             </div>
 
             <div id="previewContainer" style="display: none;">
-                <label style="display: block; font-size: 1.125rem; margin-bottom: 0.5rem;">Preview (how it will appear)</label>
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem; margin-bottom:0.5rem;"><label style="display: block; font-size: 1.125rem;">Preview (how it will appear)</label><span id="cameraStatusBadge" class="badge off">📷 Camera: OFF</span></div>
                 <div id="parsedPreview" style="width: 100%; height: 12rem; padding: 1rem; background: rgba(31, 41, 55, 0.5); color: #d1d5db; border-radius: 0.5rem; border: 1px solid #374151; overflow-y: auto; white-space: pre-wrap; line-height: 1.6;"></div>
             </div>
 
@@ -480,7 +523,29 @@
                 </div>
             </div>
 
-            <button class="start-btn" id="startBtn">⏵ Start Reading & Enable Camera</button>
+            
+            <div style="margin-top: 1.5rem;">
+                <label style="display:block; font-size: 1rem; margin-bottom: 0.5rem;">Camera mode</label>
+                <select id="cameraMode" style="width:100%; padding:0.75rem; background:#1f2937; color:white; border:1px solid #374151; border-radius:0.5rem;">
+                    <option value="off">Teleprompter only (no camera)</option>
+                    <option value="on">Enable camera (for recording)</option>
+                </select>
+            </div>
+
+            <div id="inputSelectContainer" style="display:none; margin-top: 1rem;">
+                <label style="display:block; font-size: 0.875rem; color:#9ca3af; margin-bottom:0.25rem;">Camera source</label>
+                <select id="cameraSelect" style="width:100%; padding:0.75rem; background:#1f2937; color:white; border:1px solid #374151; border-radius:0.5rem;">
+                    <option value="">Default camera</option>
+                </select>
+
+                <label style="display:block; font-size: 0.875rem; color:#9ca3af; margin:0.75rem 0 0.25rem;">Microphone source</label>
+                <select id="micSelect" style="width:100%; padding:0.75rem; background:#1f2937; color:white; border:1px solid #374151; border-radius:0.5rem;">
+                    <option value="">Default microphone</option>
+                </select>
+                <p style="font-size: 0.75rem; color:#6b7280; margin-top:0.5rem;">Device names appear after you allow access once.</p>
+            </div>
+
+            <button class="start-btn" id="startBtn">⏵ Start Teleprompter</button>
 
             <div class="footer">
                 <p>© 2025 KIN Creative - Family Above All</p>
@@ -498,6 +563,7 @@
             <button class="control-btn" id="pauseBtn">⏸ Pause</button>
             <button class="control-btn" id="prevBtn">⏫ Previous</button>
             <button class="control-btn" id="nextBtn">⏬ Next</button>
+            <button class="control-btn" id="enableCameraBtn" style="background:#10b981;">📷 Enable Camera</button>
             <button class="record-btn control-btn" id="recordBtn">⏺ Record</button>
             <button class="download-btn control-btn" id="downloadBtn" style="display: none;">⬇ Download</button>
             <button class="reset-btn control-btn" id="resetBtn">↻ Reset</button>
@@ -517,6 +583,9 @@
 <button class="control-btn toggle-btn" id="mirrorBtn">🪞 Mirror</button>
 <button class="control-btn toggle-btn" id="flipBtn">↕ Vertical Flip</button>
 
+<select id="cameraSelectReading" class="input-select" style="display:none; min-width: 10rem;"><option value="">Camera: Default</option></select>
+<select id="micSelectReading" class="input-select" style="display:none; min-width: 10rem;"><option value="">Mic: Default</option></select>
+
 <span class="segment-count" id="positionIndicator">Segment 1 of 1</span>
         </div>
 
@@ -528,6 +597,7 @@
             <div class="camera-panel">
                 <h3>Camera Preview</h3>
                 <video id="videoPreview" autoplay muted playsinline></video>
+                <div class="camera-off-notice" id="cameraOffNotice" style="display:none;">Camera is OFF. Click <b>Enable Camera</b> to preview & record.</div>
                 <div class="info">
                     <p>• Click Record to start capturing</p>
                     <p>• Recording timer shows duration</p>
@@ -550,53 +620,79 @@
     </div>
 </div>
 
-    <script>
-        let lines = [];
-        let currentLine = 0;
-        let isScrolling = false;
-        let scrollInterval = null;
-        let currentSpeed = 3500;
-        let speedPreset = 'medium';
-        let splitAtCommas = false;
-        let mediaRecorder = null;
-        let recordedChunks = [];
-        let stream = null;
-        let isRecording = false;
-        let recordingTimer = null;
-        let recordingTime = 0;
-        let isMirrored = false;
-        let isFlipped = false;
+    
+<script>
+/* =========================
+   KIN Pro Teleprompter
+   Enhancements:
+   - Start without camera
+   - Enable camera button on reading screen
+   - Camera + microphone selectors (setup + reading)
+   - Camera OFF badge in preview panel
+   ========================= */
 
-        const speedPresets = {
-            slow: 3000,
-            medium: 3500,
-            fast: 1500
-        };
+let lines = [];
+let currentLine = 0;
+let isScrolling = false;
+let scrollInterval = null;
+let currentSpeed = 3500;
+let speedPreset = 'medium';
+let splitAtCommas = false;
 
-        // Setup screen elements
-        const contentInput = document.getElementById('contentInput');
-        const segmentCount = document.getElementById('segmentCount');
-        const parsedPreview = document.getElementById('parsedPreview');
-        const previewContainer = document.getElementById('previewContainer');
-        const commaToggle = document.getElementById('commaToggle');
-        const customSpeedInput = document.getElementById('customSpeed');
-        const startBtn = document.getElementById('startBtn');
-        const setupScreen = document.getElementById('setupScreen');
-        const readingScreen = document.getElementById('readingScreen');
+let mediaRecorder = null;
+let recordedChunks = [];
+let stream = null;
+let isRecording = false;
+let recordingTimer = null;
+let recordingTime = 0;
 
-        // Reading screen elements
-        const pauseBtn = document.getElementById('pauseBtn');
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        const recordBtn = document.getElementById('recordBtn');
-        const downloadBtn = document.getElementById('downloadBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const speedInput = document.getElementById('speedInput');
-        const positionIndicator = document.getElementById('positionIndicator');
-        const prompterContent = document.getElementById('prompterContent');
-        const videoPreview = document.getElementById('videoPreview');
-        const prompter = document.getElementById('prompter');
+let isMirrored = false;
+let isFlipped = false;
 
+let cameraEnabled = false;
+let selectedCameraId = null;
+let selectedMicId = null;
+
+const speedPresets = { slow: 3000, medium: 3500, fast: 1500 };
+
+// Setup screen elements
+const contentInput = document.getElementById('contentInput');
+const segmentCount = document.getElementById('segmentCount');
+const parsedPreview = document.getElementById('parsedPreview');
+const previewContainer = document.getElementById('previewContainer');
+const commaToggle = document.getElementById('commaToggle');
+const customSpeedInput = document.getElementById('customSpeed');
+const startBtn = document.getElementById('startBtn');
+const setupScreen = document.getElementById('setupScreen');
+const readingScreen = document.getElementById('readingScreen');
+
+// New setup inputs
+const cameraModeSelect = document.getElementById('cameraMode');
+const inputSelectContainer = document.getElementById('inputSelectContainer');
+const cameraSelect = document.getElementById('cameraSelect');
+const micSelect = document.getElementById('micSelect');
+const cameraStatusBadge = document.getElementById('cameraStatusBadge');
+
+// Reading screen elements
+const pauseBtn = document.getElementById('pauseBtn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const enableCameraBtn = document.getElementById('enableCameraBtn');
+const recordBtn = document.getElementById('recordBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+const resetBtn = document.getElementById('resetBtn');
+const speedInput = document.getElementById('speedInput');
+const positionIndicator = document.getElementById('positionIndicator');
+const prompterContent = document.getElementById('prompterContent');
+const videoPreview = document.getElementById('videoPreview');
+const prompter = document.getElementById('prompter');
+const cameraOffNotice = document.getElementById('cameraOffNotice');
+
+// Reading selectors
+const cameraSelectReading = document.getElementById('cameraSelectReading');
+const micSelectReading = document.getElementById('micSelectReading');
+
+// Mirror/Flip + overlay elements
 const mirrorBtn = document.getElementById('mirrorBtn');
 const flipBtn = document.getElementById('flipBtn');
 
@@ -605,380 +701,445 @@ const overlayCloseBtn = document.getElementById('overlayCloseBtn');
 const overlayResetBtn = document.getElementById('overlayResetBtn');
 const overlayDownloadBtn = document.getElementById('overlayDownloadBtn');
 
+/* ---------- Helpers ---------- */
+function setBadge(on) {
+  if (!cameraStatusBadge) return;
+  cameraStatusBadge.classList.toggle('on', on);
+  cameraStatusBadge.classList.toggle('off', !on);
+  cameraStatusBadge.textContent = on ? '📷 Camera: ON' : '📷 Camera: OFF';
+}
 
-        // Update segment count and preview
-        function updatePreview() {
-            const content = contentInput.value;
-            if (content.trim()) {
-                lines = parseContent(content);
-                segmentCount.textContent = `${lines.length} segments detected`;
-                startBtn.disabled = false;
-                
-                // Show preview
-                previewContainer.style.display = 'block';
-                parsedPreview.textContent = lines.join('\n\n');
-            } else {
-                segmentCount.textContent = 'Content will be split into segments';
-                startBtn.disabled = true;
-                previewContainer.style.display = 'none';
-            }
-        }
+function updateCameraUI() {
+  setBadge(cameraEnabled);
 
-        contentInput.addEventListener('input', updatePreview);
-        
-        commaToggle.addEventListener('change', () => {
-            splitAtCommas = commaToggle.checked;
-            updatePreview();
-        });
+  if (enableCameraBtn) enableCameraBtn.style.display = cameraEnabled ? 'none' : 'inline-flex';
+  if (cameraOffNotice) cameraOffNotice.style.display = cameraEnabled ? 'none' : 'block';
+  if (recordBtn) recordBtn.disabled = !cameraEnabled || !stream;
 
-        // Speed preset buttons (setup screen)
-        document.querySelectorAll('#setupScreen .speed-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('#setupScreen .speed-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                speedPreset = btn.dataset.speed;
-                currentSpeed = speedPresets[speedPreset];
-                customSpeedInput.value = currentSpeed;
-            });
-        });
+  const showSelectors = cameraEnabled;
+  if (cameraSelectReading) cameraSelectReading.style.display = showSelectors ? 'inline-flex' : 'none';
+  if (micSelectReading) micSelectReading.style.display = showSelectors ? 'inline-flex' : 'none';
+}
 
-        // Speed preset buttons (reading screen)
-        document.querySelectorAll('#readingScreen .speed-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('#readingScreen .speed-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                speedPreset = btn.dataset.speed;
-                currentSpeed = speedPresets[speedPreset];
-                speedInput.value = currentSpeed;
-                restartScrolling();
-            });
-        });
-
-        // Custom speed input
-        customSpeedInput.addEventListener('input', () => {
-            const value = parseInt(customSpeedInput.value);
-            if (value >= 500 && value <= 10000) {
-                currentSpeed = value;
-            }
-        });
-
-        speedInput.addEventListener('input', () => {
-            const value = parseInt(speedInput.value);
-            if (value >= 500 && value <= 10000) {
-                currentSpeed = value;
-                restartScrolling();
-            }
-        });
-
-
-mirrorBtn.addEventListener('click', () => {
-    isMirrored = !isMirrored;
-    mirrorBtn.classList.toggle('active', isMirrored);
-    applyVideoTransform();
-});
-
-flipBtn.addEventListener('click', () => {
-    isFlipped = !isFlipped;
-    flipBtn.classList.toggle('active', isFlipped);
-    applyVideoTransform();
-});
-
-overlayCloseBtn.addEventListener('click', hideCompletionOverlay);
-overlayResetBtn.addEventListener('click', () => {
-    hideCompletionOverlay();
-    resetBtn.click();
-});
-overlayDownloadBtn.addEventListener('click', () => downloadBtn.click());
-
-
-        function parseContent(content) {
-            return content
-                .split(splitAtCommas ? /[.!?,]+/ : /[.!?]+/)
-                .map(sentence => sentence.trim())
-                .filter(sentence => sentence.length > 0)
-                .map(sentence => {
-                    // Add back the punctuation if it doesn't already have it
-                    const lastChar = sentence[sentence.length - 1];
-                    if (!['.', '!', '?', ','].includes(lastChar)) {
-                        return sentence + '.';
-                    }
-                    return sentence;
-                });
-        }
-
+function parseContent(content) {
+  return content
+    .split(splitAtCommas ? /[.!?,]+/ : /[.!?]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 0)
+    .map(s => {
+      const last = s[s.length - 1];
+      if (!['.', '!', '?', ','].includes(last)) return s + '.';
+      return s;
+    });
+}
 
 function applyVideoTransform() {
-    const transforms = [];
-    if (isMirrored) transforms.push('scaleX(-1)');
-    if (isFlipped) transforms.push('scaleY(-1)');
-    videoPreview.style.transform = transforms.length ? transforms.join(' ') : 'none';
+  const transforms = [];
+  if (isMirrored) transforms.push('scaleX(-1)');
+  if (isFlipped) transforms.push('scaleY(-1)');
+  videoPreview.style.transform = transforms.length ? transforms.join(' ') : 'none';
 }
 
 function showCompletionOverlay() {
-    // Mirror download visibility with main download button
-    overlayDownloadBtn.style.display = (downloadBtn.style.display === 'none') ? 'none' : 'flex';
-    completeOverlay.style.display = 'flex';
+  overlayDownloadBtn.style.display = (downloadBtn.style.display === 'none') ? 'none' : 'flex';
+  completeOverlay.style.display = 'flex';
 }
 
 function hideCompletionOverlay() {
-    completeOverlay.style.display = 'none';
+  completeOverlay.style.display = 'none';
 }
 
-                async function startCamera() {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                videoPreview.srcObject = stream;
-                applyVideoTransform();
-            } catch (error) {
-                alert('Could not access camera: ' + error.message);
-            }
-        }
+/* ---------- Preview updates ---------- */
+function updatePreview() {
+  const content = contentInput.value;
+  if (content.trim()) {
+    lines = parseContent(content);
+    segmentCount.textContent = `${lines.length} segments detected`;
+    startBtn.disabled = false;
+    previewContainer.style.display = 'block';
+    parsedPreview.textContent = lines.join('\n\n');
+  } else {
+    segmentCount.textContent = 'Content will be split into segments';
+    startBtn.disabled = true;
+    previewContainer.style.display = 'none';
+  }
+}
+contentInput.addEventListener('input', updatePreview);
+commaToggle.addEventListener('change', () => { splitAtCommas = commaToggle.checked; updatePreview(); });
 
-        function stopCamera() {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                stream = null;
-            }
-        }
+/* ---------- Speed presets ---------- */
+document.querySelectorAll('#setupScreen .speed-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#setupScreen .speed-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    speedPreset = btn.dataset.speed;
+    currentSpeed = speedPresets[speedPreset];
+    customSpeedInput.value = currentSpeed;
+  });
+});
 
-        startBtn.addEventListener('click', async () => {
-            lines = parseContent(contentInput.value);
-            if (lines.length === 0) return;
+document.querySelectorAll('#readingScreen .speed-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#readingScreen .speed-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    speedPreset = btn.dataset.speed;
+    currentSpeed = speedPresets[speedPreset];
+    speedInput.value = currentSpeed;
+    restartScrolling();
+  });
+});
 
-            await startCamera();
-            setupScreen.style.display = 'none';
-            readingScreen.style.display = 'flex';
-            
-            // Sync speed input on reading screen with setup screen value
-            speedInput.value = customSpeedInput.value;
-            
-            // Update speed preset buttons on reading screen
-            document.querySelectorAll('#readingScreen .speed-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.dataset.speed === speedPreset) {
-                    btn.classList.add('active');
-                }
-            });
-            
-            renderContent();
-            // Don't start scrolling automatically - wait for record button
-            isScrolling = false;
-            pauseBtn.textContent = '▶ Start';
-        });
+customSpeedInput.addEventListener('input', () => {
+  const v = parseInt(customSpeedInput.value);
+  if (v >= 500 && v <= 10000) currentSpeed = v;
+});
 
-        function renderContent() {
-            const topPadding = '<div style="height: 50vh;"></div>';
-            const bottomPadding = '<div style="height: 50vh;"></div>';
-            
-            prompterContent.innerHTML = topPadding + lines.map((line, index) => 
-                `<div class="line ${index === 0 ? 'current' : 'future'}" data-index="${index}">${line.trim()}</div>`
-            ).join('') + bottomPadding;
-            updatePosition();
-            scrollToCenter();
-        }
+speedInput.addEventListener('input', () => {
+  const v = parseInt(speedInput.value);
+  if (v >= 500 && v <= 10000) { currentSpeed = v; restartScrolling(); }
+});
 
-        function scrollToCenter() {
-            const container = prompter;
-            const activeElement = container.querySelector(`[data-index="${currentLine}"]`);
-            if (activeElement) {
-                const containerRect = container.getBoundingClientRect();
-                const elementRect = activeElement.getBoundingClientRect();
-                const containerCenter = containerRect.height / 2;
-                const elementCenter = elementRect.height / 2;
-                const scrollOffset = elementRect.top - containerRect.top - containerCenter + elementCenter;
-                
-                container.scrollBy({
-                    top: scrollOffset,
-                    behavior: 'smooth'
-                });
-            }
-        }
+/* ---------- Mirror/Flip ---------- */
+mirrorBtn.addEventListener('click', () => { isMirrored = !isMirrored; mirrorBtn.classList.toggle('active', isMirrored); applyVideoTransform(); });
+flipBtn.addEventListener('click', () => { isFlipped = !isFlipped; flipBtn.classList.toggle('active', isFlipped); applyVideoTransform(); });
 
-        function startScrolling() {
-            isScrolling = true;
-            pauseBtn.textContent = '⏸ Pause';
-            
-            scrollInterval = setInterval(() => {
-                if (currentLine < lines.length - 1) {
-                    currentLine++;
-                    updateDisplay();
-                } else {
-                    stopScrolling(true);
-                }
-            }, currentSpeed);
-        }
+/* ---------- Overlay ---------- */
+overlayCloseBtn.addEventListener('click', hideCompletionOverlay);
+overlayResetBtn.addEventListener('click', () => { hideCompletionOverlay(); resetBtn.click(); });
+overlayDownloadBtn.addEventListener('click', () => downloadBtn.click());
 
-        function stopScrolling(completed = false) {
-            isScrolling = false;
-            pauseBtn.textContent = '▶ Resume';
-            if (scrollInterval) {
-                clearInterval(scrollInterval);
-                scrollInterval = null;
-            }
+/* ---------- Device enumeration ---------- */
+async function ensureDeviceLabels() {
+  try {
+    const temp = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    temp.getTracks().forEach(t => t.stop());
+  } catch (e) { /* ignore */ }
+}
 
-if (completed) {
-    // If we reach the end while recording, stop recording automatically
-    if (isRecording) {
-        stopRecording();
+async function populateDeviceLists() {
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  const cams = devices.filter(d => d.kind === 'videoinput');
+  const mics = devices.filter(d => d.kind === 'audioinput');
+
+  cameraSelect.innerHTML = '<option value="">Default camera</option>';
+  cams.forEach((d, idx) => {
+    const opt = document.createElement('option');
+    opt.value = d.deviceId;
+    opt.textContent = d.label || `Camera ${idx + 1}`;
+    cameraSelect.appendChild(opt);
+  });
+
+  micSelect.innerHTML = '<option value="">Default microphone</option>';
+  mics.forEach((d, idx) => {
+    const opt = document.createElement('option');
+    opt.value = d.deviceId;
+    opt.textContent = d.label || `Microphone ${idx + 1}`;
+    micSelect.appendChild(opt);
+  });
+
+  cameraSelectReading.innerHTML = '<option value="">Camera: Default</option>';
+  cams.forEach((d, idx) => {
+    const opt = document.createElement('option');
+    opt.value = d.deviceId;
+    opt.textContent = d.label || `Camera ${idx + 1}`;
+    cameraSelectReading.appendChild(opt);
+  });
+
+  micSelectReading.innerHTML = '<option value="">Mic: Default</option>';
+  mics.forEach((d, idx) => {
+    const opt = document.createElement('option');
+    opt.value = d.deviceId;
+    opt.textContent = d.label || `Microphone ${idx + 1}`;
+    micSelectReading.appendChild(opt);
+  });
+
+  if (selectedCameraId) { cameraSelect.value = selectedCameraId; cameraSelectReading.value = selectedCameraId; }
+  if (selectedMicId) { micSelect.value = selectedMicId; micSelectReading.value = selectedMicId; }
+}
+
+cameraModeSelect.addEventListener('change', async () => {
+  cameraEnabled = cameraModeSelect.value === 'on';
+  inputSelectContainer.style.display = cameraEnabled ? 'block' : 'none';
+  setBadge(cameraEnabled);
+  if (cameraEnabled) {
+    await ensureDeviceLabels();
+    await populateDeviceLists();
+  }
+});
+
+cameraSelect.addEventListener('change', async () => {
+  selectedCameraId = cameraSelect.value || null;
+  cameraSelectReading.value = cameraSelect.value || '';
+  if (stream) await restartMediaStream();
+});
+
+micSelect.addEventListener('change', async () => {
+  selectedMicId = micSelect.value || null;
+  micSelectReading.value = micSelect.value || '';
+  if (stream) await restartMediaStream();
+});
+
+cameraSelectReading.addEventListener('change', async () => {
+  selectedCameraId = cameraSelectReading.value || null;
+  cameraSelect.value = cameraSelectReading.value || '';
+  if (stream) await restartMediaStream();
+});
+
+micSelectReading.addEventListener('change', async () => {
+  selectedMicId = micSelectReading.value || null;
+  micSelect.value = micSelectReading.value || '';
+  if (stream) await restartMediaStream();
+});
+
+/* ---------- Media stream ---------- */
+async function startMediaStream() {
+  if (!cameraEnabled) return;
+  try {
+    const constraints = {
+      video: selectedCameraId ? { deviceId: { exact: selectedCameraId } } : true,
+      audio: selectedMicId ? { deviceId: { exact: selectedMicId } } : true
+    };
+    stream = await navigator.mediaDevices.getUserMedia(constraints);
+    videoPreview.srcObject = stream;
+    applyVideoTransform();
+    updateCameraUI();
+  } catch (error) {
+    alert('Could not access camera/microphone: ' + error.message);
+    cameraEnabled = false;
+    cameraModeSelect.value = 'off';
+    inputSelectContainer.style.display = 'none';
+    setBadge(false);
+    updateCameraUI();
+  }
+}
+
+function stopMediaStream() {
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+  }
+}
+
+async function restartMediaStream() {
+  if (isRecording) stopRecording();
+  stopMediaStream();
+  await startMediaStream();
+}
+
+/* ---------- Enable camera on reading screen ---------- */
+enableCameraBtn.addEventListener('click', async () => {
+  cameraEnabled = true;
+  cameraModeSelect.value = 'on';
+  inputSelectContainer.style.display = 'block';
+  await ensureDeviceLabels();
+  await populateDeviceLists();
+  await startMediaStream();
+});
+
+/* ---------- Start Teleprompter ---------- */
+startBtn.addEventListener('click', async () => {
+  lines = parseContent(contentInput.value);
+  if (lines.length === 0) return;
+
+  speedInput.value = customSpeedInput.value;
+  currentSpeed = parseInt(speedInput.value) || currentSpeed;
+
+  cameraEnabled = (cameraModeSelect.value === 'on');
+  setBadge(cameraEnabled);
+
+  setupScreen.style.display = 'none';
+  readingScreen.style.display = 'flex';
+
+  document.querySelectorAll('#readingScreen .speed-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.speed === speedPreset);
+  });
+
+  currentLine = 0;
+  renderContent();
+
+  isScrolling = false;
+  pauseBtn.textContent = '▶ Start';
+
+  if (cameraEnabled) {
+    await ensureDeviceLabels();
+    await populateDeviceLists();
+    await startMediaStream();
+  } else {
+    stopMediaStream();
+    updateCameraUI();
+  }
+});
+
+/* ---------- Teleprompter ---------- */
+function renderContent() {
+  const topPadding = '<div style="height: 50vh;"></div>';
+  const bottomPadding = '<div style="height: 50vh;"></div>';
+  prompterContent.innerHTML = topPadding + lines.map((line, index) =>
+    `<div class="line ${index === 0 ? 'current' : 'future'}" data-index="${index}">${line.trim()}</div>`
+  ).join('') + bottomPadding;
+  updatePosition();
+  scrollToCenter();
+}
+
+function scrollToCenter() {
+  const active = prompter.querySelector(`[data-index="${currentLine}"]`);
+  if (!active) return;
+  const cRect = prompter.getBoundingClientRect();
+  const eRect = active.getBoundingClientRect();
+  const scrollOffset = (eRect.top - cRect.top) - (cRect.height / 2) + (eRect.height / 2);
+  prompter.scrollBy({ top: scrollOffset, behavior: 'smooth' });
+}
+
+/* ---------- Scrolling ---------- */
+function startScrolling() {
+  isScrolling = true;
+  pauseBtn.textContent = '⏸ Pause';
+  scrollInterval = setInterval(() => {
+    if (currentLine < lines.length - 1) {
+      currentLine++; updateDisplay();
+    } else {
+      stopScrolling(true);
     }
-    showCompletionOverlay();
+  }, currentSpeed);
 }
-        }
 
-        function restartScrolling() {
-            if (isScrolling) {
-                stopScrolling();
-                startScrolling();
-            }
-        }
+function stopScrolling(completed = false) {
+  isScrolling = false;
+  pauseBtn.textContent = '▶ Resume';
+  if (scrollInterval) { clearInterval(scrollInterval); scrollInterval = null; }
+  if (completed) {
+    if (isRecording) stopRecording();
+    showCompletionOverlay();
+  }
+}
 
-        function updateDisplay() {
-            const lineElements = document.querySelectorAll('.line');
-            lineElements.forEach((el, index) => {
-                el.classList.remove('current', 'past', 'future');
-                if (index === currentLine) {
-                    el.classList.add('current');
-                } else if (index < currentLine) {
-                    el.classList.add('past');
-                } else {
-                    el.classList.add('future');
-                }
-            });
-            scrollToCenter();
-            updatePosition();
-        }
+function restartScrolling() {
+  if (!isScrolling) return;
+  stopScrolling(false);
+  startScrolling();
+}
 
-        function updatePosition() {
-            positionIndicator.textContent = `Segment ${currentLine + 1} of ${lines.length}`;
-        }
+function updateDisplay() {
+  document.querySelectorAll('.line').forEach((el, idx) => {
+    el.classList.remove('current', 'past', 'future');
+    if (idx === currentLine) el.classList.add('current');
+    else if (idx < currentLine) el.classList.add('past');
+    else el.classList.add('future');
+  });
+  scrollToCenter();
+  updatePosition();
+}
 
-        pauseBtn.addEventListener('click', () => {
-            if (isScrolling) {
-                stopScrolling();
-            } else {
-                startScrolling();
-            }
-        });
+function updatePosition() {
+  positionIndicator.textContent = `Segment ${currentLine + 1} of ${lines.length}`;
+}
 
-        prevBtn.addEventListener('click', () => {
-            if (currentLine > 0) {
-                currentLine--;
-                updateDisplay();
-            }
-        });
+/* ---------- Navigation ---------- */
+pauseBtn.addEventListener('click', () => { isScrolling ? stopScrolling(false) : startScrolling(); });
+prevBtn.addEventListener('click', () => { if (currentLine > 0) { currentLine--; updateDisplay(); } });
+nextBtn.addEventListener('click', () => { if (currentLine < lines.length - 1) { currentLine++; updateDisplay(); } });
 
-        nextBtn.addEventListener('click', () => {
-            if (currentLine < lines.length - 1) {
-                currentLine++;
-                updateDisplay();
-            }
-        });
+/* ---------- Recording ---------- */
+recordBtn.addEventListener('click', () => {
+  if (!cameraEnabled || !stream) { alert('Enable camera to record.'); return; }
+  if (!isRecording) {
+    startRecording();
+    if (!isScrolling) startScrolling();
+  } else {
+    stopRecording();
+  }
+});
 
-        recordBtn.addEventListener('click', () => {
-            if (!isRecording) {
-                startRecording();
-                // Start scrolling when recording starts
-                if (!isScrolling) {
-                    startScrolling();
-                }
-            } else {
-                stopRecording();
-            }
-        });
+function startRecording() {
+  try {
+    let options = {};
+    if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) options = { mimeType: 'video/webm;codecs=vp9' };
+    else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) options = { mimeType: 'video/webm;codecs=vp8' };
+    else if (MediaRecorder.isTypeSupported('video/webm')) options = { mimeType: 'video/webm' };
 
-        function startRecording() {
-            if (!stream) {
-                alert('Camera not ready. Please wait.');
-                return;
-            }
+    mediaRecorder = new MediaRecorder(stream, options);
+    recordedChunks = [];
 
-            try {
-                let options = {};
-                if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
-                    options = { mimeType: 'video/webm;codecs=vp9' };
-                } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
-                    options = { mimeType: 'video/webm;codecs=vp8' };
-                } else if (MediaRecorder.isTypeSupported('video/webm')) {
-                    options = { mimeType: 'video/webm' };
-                }
+    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = () => {
+      downloadBtn.style.display = 'flex';
+      if (completeOverlay.style.display === 'flex') overlayDownloadBtn.style.display = 'flex';
+    };
 
-                mediaRecorder = new MediaRecorder(stream, options);
-                recordedChunks = [];
+    mediaRecorder.start(100);
+    isRecording = true;
 
-                mediaRecorder.ondataavailable = (event) => {
-                    if (event.data.size > 0) {
-                        recordedChunks.push(event.data);
-                    }
-                };
+    recordBtn.classList.add('recording');
+    recordBtn.textContent = '⏹ Stop (0:00)';
 
-                mediaRecorder.onstop = () => {
-                    downloadBtn.style.display = 'flex';
-                    if (completeOverlay.style.display === 'flex') {
-                        overlayDownloadBtn.style.display = 'flex';
-                    }
-                };
+    recordingTime = 0;
+    recordingTimer = setInterval(() => {
+      recordingTime++;
+      const mins = Math.floor(recordingTime / 60);
+      const secs = recordingTime % 60;
+      recordBtn.textContent = `⏹ Stop (${mins}:${secs.toString().padStart(2,'0')})`;
+    }, 1000);
 
-                mediaRecorder.start(100);
-                isRecording = true;
-                recordBtn.classList.add('recording');
-                recordBtn.textContent = '⏹ Stop (0:00)';
+  } catch (error) {
+    alert('Could not start recording: ' + error.message);
+  }
+}
 
-                recordingTime = 0;
-                recordingTimer = setInterval(() => {
-                    recordingTime++;
-                    const mins = Math.floor(recordingTime / 60);
-                    const secs = recordingTime % 60;
-                    recordBtn.textContent = `⏹ Stop (${mins}:${secs.toString().padStart(2, '0')})`;
-                }, 1000);
-            } catch (error) {
-                alert('Could not start recording: ' + error.message);
-            }
-        }
+function stopRecording() {
+  if (mediaRecorder && isRecording) {
+    mediaRecorder.stop();
+    isRecording = false;
+    recordBtn.classList.remove('recording');
+    recordBtn.textContent = '⏺ Record';
+    if (recordingTimer) { clearInterval(recordingTimer); recordingTimer = null; }
+  }
+}
 
-        function stopRecording() {
-            if (mediaRecorder && isRecording) {
-                mediaRecorder.stop();
-                isRecording = false;
-                recordBtn.classList.remove('recording');
-                recordBtn.textContent = '⏺ Record';
-                
-                if (recordingTimer) {
-                    clearInterval(recordingTimer);
-                    recordingTimer = null;
-                }
-            }
-        }
+downloadBtn.addEventListener('click', () => {
+  if (recordedChunks.length === 0) return;
+  const blob = new Blob(recordedChunks, { type: 'video/webm' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `teleprompter-recording-${Date.now()}.webm`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
 
-        downloadBtn.addEventListener('click', () => {
-            if (recordedChunks.length === 0) return;
-            
-            const blob = new Blob(recordedChunks, { type: 'video/webm' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `teleprompter-recording-${Date.now()}.webm`;
-            a.click();
-            URL.revokeObjectURL(url);
-        });
+/* ---------- Reset ---------- */
+resetBtn.addEventListener('click', () => {
+  stopScrolling(false);
+  if (isRecording) stopRecording();
+  stopMediaStream();
 
-        resetBtn.addEventListener('click', () => {
-            stopScrolling();
-            stopRecording();
-            stopCamera();
-            currentLine = 0;
-            recordedChunks = [];
-            downloadBtn.style.display = 'none';
-            hideCompletionOverlay();
-            // Reset video transforms
-            isMirrored = false;
-            isFlipped = false;
-            mirrorBtn.classList.remove('active');
-            flipBtn.classList.remove('active');
-            applyVideoTransform();
-            setupScreen.style.display = 'block';
-            readingScreen.style.display = 'none';
-        });
-    </script>
+  currentLine = 0;
+  recordedChunks = [];
+  downloadBtn.style.display = 'none';
+  hideCompletionOverlay();
+
+  isMirrored = false; isFlipped = false;
+  mirrorBtn.classList.remove('active');
+  flipBtn.classList.remove('active');
+  applyVideoTransform();
+
+  cameraEnabled = false;
+  selectedCameraId = null;
+  selectedMicId = null;
+  cameraModeSelect.value = 'off';
+  inputSelectContainer.style.display = 'none';
+  setBadge(false);
+
+  setupScreen.style.display = 'block';
+  readingScreen.style.display = 'none';
+  updateCameraUI();
+});
+
+// Init
+startBtn.disabled = true;
+setBadge(false);
+updateCameraUI();
+</script>
+
 
 
 </body>
