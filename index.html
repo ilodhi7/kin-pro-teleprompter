@@ -781,17 +781,71 @@ function updateCameraUI() {
   if (micSelectReading) micSelectReading.style.display = showSelectors ? 'inline-flex' : 'none';
 }
 
+// 💥 START OF CORRECTION: SMARTER CONTENT PARSING 💥
 function parseContent(content) {
-  return content
-    .split(splitAtCommas ? /[.!?,]+/ : /[.!?]+/)
-    .map(s => s.trim())
-    .filter(s => s.length > 0)
-    .map(s => {
-      const last = s[s.length - 1];
-      if (!['.', '!', '?', ','].includes(last)) return s + '.';
-      return s;
-    });
+    // List of common abbreviations to prevent splitting (must be lowercase and include the period)
+    const ABBREVIATIONS_SET = new Set([
+        'mr.', 'mrs.', 'ms.', 'dr.', 'jr.', 'sr.', 'prof.', 'capt.', 'lt.', 'col.', 'gen.',
+        'st.', 'ave.', 'rd.', 'blvd.', 'inc.', 'co.', 'corp.', 'ltd.', 'etc.', 'i.e.', 'e.g.',
+        'jan.', 'feb.', 'mar.', 'apr.', 'jun.', 'jul.', 'aug.', 'sep.', 'oct.', 'nov.', 'dec.'
+    ]);
+    
+    // First, normalize all punctuation to have a space after them for consistent splitting detection
+    let text = content.replace(/([.?!,])(?=\S)/g, "$1 ");
+
+    // Define the separators based on the toggle setting, capturing the punctuation
+    let separators = splitAtCommas ? /([.?!,])\s+/ : /([.?!])\s+/;
+    
+    // Split the content by the defined separators, keeping the punctuation mark in the result array
+    let potentialSegments = text.split(separators);
+
+    let finalLines = [];
+    let currentSegment = "";
+
+    for (let segment of potentialSegments) {
+        if (!segment || segment.trim().length === 0) continue;
+
+        let trimmedSegment = segment.trim();
+
+        // 🎯 FIX: Explicitly ignore segments that are only punctuation marks
+        if (trimmedSegment.length === 1 && trimmedSegment.match(/[.?!,]/)) continue;
+        
+        // Check if the segment ends in a known abbreviation
+        let lastWordMatch = trimmedSegment.toLowerCase().match(/(\w+\.)$/);
+        let isAbbreviation = lastWordMatch && ABBREVIATIONS_SET.has(lastWordMatch[1]);
+        
+        if (isAbbreviation) {
+            // It's an abbreviation, merge it with the current segment accumulator.
+            currentSegment += (currentSegment.length > 0 ? " " : "") + trimmedSegment;
+        } else {
+            // It's a real segment end. Add accumulated text + current segment to the final list.
+            if (currentSegment.length > 0) {
+                // If there's accumulated text, append the current segment to it
+                finalLines.push(currentSegment + (trimmedSegment.length > 0 ? " " + trimmedSegment : ""));
+                currentSegment = "";
+            } else {
+                // Otherwise, the current segment is a standalone sentence
+                finalLines.push(trimmedSegment);
+            }
+        }
+    }
+    
+    // Push any leftover accumulated text
+    if (currentSegment.length > 0) {
+        finalLines.push(currentSegment);
+    }
+    
+    // Final cleanup: ensure segments end in punctuation if missing (the original failsafe)
+    return finalLines.map(s => {
+        let trimmed = s.trim();
+        // Check if it ends with one of the allowed punctuations
+        if (trimmed.length > 0 && !trimmed.match(/[.?!,]$/)) {
+            return trimmed + '.';
+        }
+        return trimmed;
+    }).filter(s => s.length > 0);
 }
+// 💥 END OF CORRECTION: SMARTER CONTENT PARSING 💥
 
 function applyVideoTransform() {
   const transforms = [];
