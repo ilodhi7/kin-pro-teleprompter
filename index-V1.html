@@ -376,64 +376,6 @@
             border-radius: 0.5rem;
             font-size: 0.875rem;
         }
-    
-.toggle-btn {
-    background: #4b5563;
-}
-.toggle-btn:hover {
-    background: #374151;
-}
-.toggle-btn.active {
-    background: #10b981;
-}
-.toggle-btn.active:hover {
-    background: #059669;
-}
-
-.overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.75);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: 1.5rem;
-}
-
-.overlay-card {
-    width: 100%;
-    max-width: 520px;
-    background: #111827;
-    border: 1px solid #374151;
-    border-radius: 1rem;
-    padding: 1.5rem;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    text-align: center;
-}
-
-.overlay-card h2 {
-    font-size: 1.75rem;
-    margin-bottom: 0.75rem;
-    background: linear-gradient(135deg, #34d399 0%, #3b82f6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-weight: 800;
-}
-
-.overlay-card p {
-    color: #d1d5db;
-    line-height: 1.6;
-    margin-bottom: 1rem;
-}
-
-.overlay-actions {
-    display: flex;
-    gap: 0.75rem;
-    justify-content: center;
-    flex-wrap: wrap;
-}
     </style>
 </head>
 <body>
@@ -513,11 +455,7 @@
                 <span style="font-size: 0.75rem; color: #9ca3af;">ms</span>
             </div>
             
-            
-<button class="control-btn toggle-btn" id="mirrorBtn">🪞 Mirror</button>
-<button class="control-btn toggle-btn" id="flipBtn">↕ Vertical Flip</button>
-
-<span class="segment-count" id="positionIndicator">Segment 1 of 1</span>
+            <span class="segment-count" id="positionIndicator">Segment 1 of 1</span>
         </div>
 
         <div class="content-area">
@@ -538,18 +476,6 @@
         </div>
     </div>
 
-<div class="overlay" id="completeOverlay" role="dialog" aria-modal="true" aria-labelledby="completeTitle">
-    <div class="overlay-card">
-        <h2 id="completeTitle">Recording complete</h2>
-        <p>You’ve reached the end of your script. Your recording has been stopped automatically (if it was running). You can download it now, or reset to record again.</p>
-        <div class="overlay-actions">
-            <button class="download-btn control-btn" id="overlayDownloadBtn" style="display: none;">⬇ Download</button>
-            <button class="control-btn" id="overlayCloseBtn">Continue</button>
-            <button class="reset-btn control-btn" id="overlayResetBtn">↻ Reset</button>
-        </div>
-    </div>
-</div>
-
     <script>
         let lines = [];
         let currentLine = 0;
@@ -564,8 +490,6 @@
         let isRecording = false;
         let recordingTimer = null;
         let recordingTime = 0;
-        let isMirrored = false;
-        let isFlipped = false;
 
         const speedPresets = {
             slow: 3000,
@@ -596,15 +520,6 @@
         const prompterContent = document.getElementById('prompterContent');
         const videoPreview = document.getElementById('videoPreview');
         const prompter = document.getElementById('prompter');
-
-const mirrorBtn = document.getElementById('mirrorBtn');
-const flipBtn = document.getElementById('flipBtn');
-
-const completeOverlay = document.getElementById('completeOverlay');
-const overlayCloseBtn = document.getElementById('overlayCloseBtn');
-const overlayResetBtn = document.getElementById('overlayResetBtn');
-const overlayDownloadBtn = document.getElementById('overlayDownloadBtn');
-
 
         // Update segment count and preview
         function updatePreview() {
@@ -670,27 +585,6 @@ const overlayDownloadBtn = document.getElementById('overlayDownloadBtn');
             }
         });
 
-
-mirrorBtn.addEventListener('click', () => {
-    isMirrored = !isMirrored;
-    mirrorBtn.classList.toggle('active', isMirrored);
-    applyVideoTransform();
-});
-
-flipBtn.addEventListener('click', () => {
-    isFlipped = !isFlipped;
-    flipBtn.classList.toggle('active', isFlipped);
-    applyVideoTransform();
-});
-
-overlayCloseBtn.addEventListener('click', hideCompletionOverlay);
-overlayResetBtn.addEventListener('click', () => {
-    hideCompletionOverlay();
-    resetBtn.click();
-});
-overlayDownloadBtn.addEventListener('click', () => downloadBtn.click());
-
-
         function parseContent(content) {
             return content
                 .split(splitAtCommas ? /[.!?,]+/ : /[.!?]+/)
@@ -706,29 +600,10 @@ overlayDownloadBtn.addEventListener('click', () => downloadBtn.click());
                 });
         }
 
-
-function applyVideoTransform() {
-    const transforms = [];
-    if (isMirrored) transforms.push('scaleX(-1)');
-    if (isFlipped) transforms.push('scaleY(-1)');
-    videoPreview.style.transform = transforms.length ? transforms.join(' ') : 'none';
-}
-
-function showCompletionOverlay() {
-    // Mirror download visibility with main download button
-    overlayDownloadBtn.style.display = (downloadBtn.style.display === 'none') ? 'none' : 'flex';
-    completeOverlay.style.display = 'flex';
-}
-
-function hideCompletionOverlay() {
-    completeOverlay.style.display = 'none';
-}
-
-                async function startCamera() {
+        async function startCamera() {
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 videoPreview.srcObject = stream;
-                applyVideoTransform();
             } catch (error) {
                 alert('Could not access camera: ' + error.message);
             }
@@ -803,26 +678,18 @@ function hideCompletionOverlay() {
                     currentLine++;
                     updateDisplay();
                 } else {
-                    stopScrolling(true);
+                    stopScrolling();
                 }
             }, currentSpeed);
         }
 
-        function stopScrolling(completed = false) {
+        function stopScrolling() {
             isScrolling = false;
             pauseBtn.textContent = '▶ Resume';
             if (scrollInterval) {
                 clearInterval(scrollInterval);
                 scrollInterval = null;
             }
-
-if (completed) {
-    // If we reach the end while recording, stop recording automatically
-    if (isRecording) {
-        stopRecording();
-    }
-    showCompletionOverlay();
-}
         }
 
         function restartScrolling() {
@@ -913,9 +780,6 @@ if (completed) {
 
                 mediaRecorder.onstop = () => {
                     downloadBtn.style.display = 'flex';
-                    if (completeOverlay.style.display === 'flex') {
-                        overlayDownloadBtn.style.display = 'flex';
-                    }
                 };
 
                 mediaRecorder.start(100);
@@ -968,18 +832,9 @@ if (completed) {
             currentLine = 0;
             recordedChunks = [];
             downloadBtn.style.display = 'none';
-            hideCompletionOverlay();
-            // Reset video transforms
-            isMirrored = false;
-            isFlipped = false;
-            mirrorBtn.classList.remove('active');
-            flipBtn.classList.remove('active');
-            applyVideoTransform();
             setupScreen.style.display = 'block';
             readingScreen.style.display = 'none';
         });
     </script>
-
-
 </body>
 </html>
