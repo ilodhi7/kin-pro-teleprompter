@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KIN Pro Teleprompter - Phase 1 Update</title>
+    <title>KIN Pro Teleprompter - With Recording</title>
     <style>
         * {
             margin: 0;
@@ -300,8 +300,6 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 3rem 0;
-            font-size: 3.5rem; /* Base size, controlled by JS */
-            transition: font-size 0.2s;
         }
 
         .line {
@@ -313,8 +311,7 @@
         }
 
         .line.current {
-            /* Changed for Phase 1: Use em to scale with prompter-content font-size */
-            font-size: 1em; 
+            font-size: 3.5rem;
             font-weight: 700;
             color: white;
             opacity: 1;
@@ -323,13 +320,13 @@
         }
 
         .line.past {
-            font-size: 0.4em; /* Relative sizing */
+            font-size: 1.5rem;
             color: #4b5563;
             opacity: 0.3;
         }
 
         .line.future {
-            font-size: 0.4em; /* Relative sizing */
+            font-size: 1.5rem;
             color: #374151;
             opacity: 0.2;
         }
@@ -380,151 +377,139 @@
             font-size: 0.875rem;
         }
     
-        .toggle-btn {
-            background: #4b5563;
-        }
-        .toggle-btn:hover {
-            background: #374151;
-        }
-        .toggle-btn.active {
-            background: #10b981;
-        }
-        .toggle-btn.active:hover {
-            background: #059669;
-        }
+.toggle-btn {
+    background: #4b5563;
+}
+.toggle-btn:hover {
+    background: #374151;
+}
+.toggle-btn.active {
+    background: #10b981;
+}
+.toggle-btn.active:hover {
+    background: #059669;
+}
 
-        .overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.75);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 1.5rem;
-        }
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1.5rem;
+}
 
-        .overlay-card {
-            width: 100%;
-            max-width: 520px;
-            background: #111827;
-            border: 1px solid #374151;
-            border-radius: 1rem;
-            padding: 1.5rem;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-            text-align: center;
-        }
+.overlay-card {
+    width: 100%;
+    max-width: 520px;
+    background: #111827;
+    border: 1px solid #374151;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    text-align: center;
+}
 
-        .overlay-card h2 {
-            font-size: 1.75rem;
-            margin-bottom: 0.75rem;
-            background: linear-gradient(135deg, #34d399 0%, #3b82f6 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-weight: 800;
-        }
+.overlay-card h2 {
+    font-size: 1.75rem;
+    margin-bottom: 0.75rem;
+    background: linear-gradient(135deg, #34d399 0%, #3b82f6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+}
 
-        .overlay-card p {
-            color: #d1d5db;
-            line-height: 1.6;
-            margin-bottom: 1rem;
-        }
+.overlay-card p {
+    color: #d1d5db;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
 
-        .overlay-actions {
-            display: flex;
-            gap: 0.75rem;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-            
-        .input-select {
-            padding: 0.6rem 0.75rem;
-            background: #374151;
-            color: white;
-            border: 1px solid #4b5563;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-        }
+.overlay-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+    
+.input-select {
+    padding: 0.6rem 0.75rem;
+    background: #374151;
+    color: white;
+    border: 1px solid #4b5563;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+}
 
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            padding: 0.25rem 0.6rem;
-            border-radius: 999px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            border: 1px solid #374151;
-            background: rgba(31, 41, 55, 0.7);
-            color: #d1d5db;
-        }
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border: 1px solid #374151;
+    background: rgba(31, 41, 55, 0.7);
+    color: #d1d5db;
+}
 
-        .badge.off {
-            border-color: rgba(220, 38, 38, 0.6);
-            color: #fecaca;
-        }
+.badge.off {
+    border-color: rgba(220, 38, 38, 0.6);
+    color: #fecaca;
+}
 
-        .badge.on {
-            border-color: rgba(16, 185, 129, 0.6);
-            color: #bbf7d0;
-        }
+.badge.on {
+    border-color: rgba(16, 185, 129, 0.6);
+    color: #bbf7d0;
+}
 
-        .camera-off-notice {
-            margin-top: 0.75rem;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            border: 1px dashed #4b5563;
-            color: #d1d5db;
-            background: rgba(17, 24, 39, 0.5);
-            font-size: 0.875rem;
-        }
+.camera-off-notice {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px dashed #4b5563;
+    color: #d1d5db;
+    background: rgba(17, 24, 39, 0.5);
+    font-size: 0.875rem;
+}
 
-        /* --- PHASE 1 STYLES --- */
-        .font-control {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #9ca3af;
-            font-size: 0.875rem;
-            padding: 0 0.5rem;
-            border-left: 1px solid #374151;
-        }
+/* ADDED CSS FOR COUNTDOWN TIMER */
+.countdown-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 100;
+    pointer-events: none; /* Allows clicks to pass through */
+    opacity: 0;
+    transition: opacity 0.2s;
+}
 
-        .range-slider {
-            -webkit-appearance: none;
-            width: 80px;
-            height: 4px;
-            background: #374151;
-            border-radius: 2px;
-            outline: none;
-        }
+.countdown-number {
+    font-size: 15rem;
+    font-weight: 900;
+    color: #10b981;
+    text-shadow: 0 0 40px rgba(16, 185, 129, 0.8);
+    animation: countdownPulse 1s ease-in-out;
+}
 
-        .range-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 14px;
-            height: 14px;
-            background: #3b82f6;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: background .15s ease-in-out;
-        }
+@keyframes countdownPulse {
+    0% { transform: scale(0.5); opacity: 0; }
+    50% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+/* END ADDED CSS FOR COUNTDOWN TIMER */
 
-        .range-slider::-webkit-slider-thumb:hover {
-            background: #2563eb;
-        }
-
-        .estimate-badge {
-            background: rgba(59, 130, 246, 0.15);
-            color: #93c5fd;
-            padding: 0.25rem 0.75rem;
-            border-radius: 999px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            white-space: nowrap;
-        }
-    </style>
+</style>
 </head>
 <body>
     <div class="setup-screen" id="setupScreen">
@@ -542,10 +527,8 @@
             <div>
                 <label style="display: block; font-size: 1.125rem; margin-bottom: 0.5rem;">Paste Your Content</label>
                 <textarea id="contentInput" placeholder="Paste your blog post content here..." style="height: 12rem;"></textarea>
-                
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; flex-wrap: wrap; gap: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
                     <p class="segment-count" id="segmentCount">Content will be split into segments</p>
-                    <div id="timeEstimate" class="estimate-badge" style="display:none;">Est: 00:00</div>
                     <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #9ca3af; cursor: pointer;">
                         <input type="checkbox" id="commaToggle" style="width: 1rem; height: 1rem; cursor: pointer;">
                         Split at commas too
@@ -553,7 +536,7 @@
                 </div>
             </div>
 
-            <div id="previewContainer" style="display: none; margin-top: 1.5rem;">
+            <div id="previewContainer" style="display: none;">
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem; margin-bottom:0.5rem;"><label style="display: block; font-size: 1.125rem;">Preview (how it will appear)</label><span id="cameraStatusBadge" class="badge off">📷 Camera: OFF</span></div>
                 <div id="parsedPreview" style="width: 100%; height: 12rem; padding: 1rem; background: rgba(31, 41, 55, 0.5); color: #d1d5db; border-radius: 0.5rem; border: 1px solid #374151; overflow-y: auto; white-space: pre-wrap; line-height: 1.6;"></div>
             </div>
@@ -627,25 +610,22 @@
                 <input type="number" class="speed-input" id="speedInput" min="500" max="10000" step="100" value="3500">
                 <span style="font-size: 0.75rem; color: #9ca3af;">ms</span>
             </div>
-
-            <div class="font-control">
-                <span style="font-size:0.75rem;">A</span>
-                <input type="range" id="fontSizeSlider" class="range-slider" min="2" max="6" step="0.1" value="3.5">
-                <span style="font-size:1.1rem; font-weight:bold;">A</span>
-            </div>
             
             
-            <button class="control-btn toggle-btn" id="mirrorBtn">🪞 Mirror</button>
-            <button class="control-btn toggle-btn" id="flipBtn">↕ Vertical Flip</button>
+<button class="control-btn toggle-btn" id="mirrorBtn">🪞 Mirror</button>
+<button class="control-btn toggle-btn" id="flipBtn">↕ Vertical Flip</button>
 
-            <select id="cameraSelectReading" class="input-select" style="display:none; min-width: 10rem;"><option value="">Camera: Default</option></select>
-            <select id="micSelectReading" class="input-select" style="display:none; min-width: 10rem;"><option value="">Mic: Default</option></select>
+<select id="cameraSelectReading" class="input-select" style="display:none; min-width: 10rem;"><option value="">Camera: Default</option></select>
+<select id="micSelectReading" class="input-select" style="display:none; min-width: 10rem;"><option value="">Mic: Default</option></select>
 
-            <span class="segment-count" id="positionIndicator">Segment 1 of 1</span>
+<span class="segment-count" id="positionIndicator">Segment 1 of 1</span>
         </div>
 
         <div class="content-area">
             <div class="prompter" id="prompter">
+                <div class="countdown-overlay" id="countdownOverlay">
+                    <span class="countdown-number" id="countdownNumber"></span>
+                </div>
                 <div class="prompter-content" id="prompterContent"></div>
             </div>
             
@@ -654,10 +634,9 @@
                 <video id="videoPreview" autoplay muted playsinline></video>
                 <div class="camera-off-notice" id="cameraOffNotice" style="display:none;">Camera is OFF. Click <b>Enable Camera</b> to preview & record.</div>
                 <div class="info">
-                    <p>• <b>Spacebar:</b> Play / Pause</p>
-                    <p>• <b>Arrow Up/Down:</b> Jump segments</p>
-                    <p>• <b>Arrow Left/Right:</b> Adjust speed</p>
+                    <p>• Click Record to start capturing</p>
                     <p>• Recording timer shows duration</p>
+                    <p>• Download when finished</p>
                     <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.75rem;">Video saves as .webm format</p>
                 </div>
             </div>
@@ -680,12 +659,13 @@
 <script>
 /* =========================
    KIN Pro Teleprompter
-   Features:
-   - Auto-Save Draft
-   - Smart Time Estimation
-   - Font Size Control
-   - Keyboard Shortcuts
-   - Camera/Mic selection & Recording
+   Enhancements:
+   - Start without camera
+   - Enable camera button on reading screen
+   - Camera + microphone selectors (setup + reading)
+   - Camera OFF badge in preview panel
+   - Content Parsing Fix (from previous step)
+   - Countdown Timer (this step)
    ========================= */
 
 let lines = [];
@@ -711,7 +691,6 @@ let selectedCameraId = null;
 let selectedMicId = null;
 
 const speedPresets = { slow: 3000, medium: 3500, fast: 1500 };
-const STORAGE_KEY = 'kin_prompter_draft';
 
 // Setup screen elements
 const contentInput = document.getElementById('contentInput');
@@ -723,7 +702,6 @@ const customSpeedInput = document.getElementById('customSpeed');
 const startBtn = document.getElementById('startBtn');
 const setupScreen = document.getElementById('setupScreen');
 const readingScreen = document.getElementById('readingScreen');
-const timeEstimateBadge = document.getElementById('timeEstimate');
 
 // New setup inputs
 const cameraModeSelect = document.getElementById('cameraMode');
@@ -741,7 +719,6 @@ const recordBtn = document.getElementById('recordBtn');
 const downloadBtn = document.getElementById('downloadBtn');
 const resetBtn = document.getElementById('resetBtn');
 const speedInput = document.getElementById('speedInput');
-const fontSizeSlider = document.getElementById('fontSizeSlider');
 const positionIndicator = document.getElementById('positionIndicator');
 const prompterContent = document.getElementById('prompterContent');
 const videoPreview = document.getElementById('videoPreview');
@@ -760,6 +737,10 @@ const completeOverlay = document.getElementById('completeOverlay');
 const overlayCloseBtn = document.getElementById('overlayCloseBtn');
 const overlayResetBtn = document.getElementById('overlayResetBtn');
 const overlayDownloadBtn = document.getElementById('overlayDownloadBtn');
+
+// New countdown elements
+const countdownOverlay = document.getElementById('countdownOverlay');
+const countdownNumber = document.getElementById('countdownNumber');
 
 /* ---------- Helpers ---------- */
 function setBadge(on) {
@@ -781,7 +762,7 @@ function updateCameraUI() {
   if (micSelectReading) micSelectReading.style.display = showSelectors ? 'inline-flex' : 'none';
 }
 
-// 💥 START OF CORRECTION: SMARTER CONTENT PARSING 💥
+// CORRECTED parseContent function (from previous step)
 function parseContent(content) {
     // List of common abbreviations to prevent splitting (must be lowercase and include the period)
     const ABBREVIATIONS_SET = new Set([
@@ -794,7 +775,7 @@ function parseContent(content) {
     let text = content.replace(/([.?!,])(?=\S)/g, "$1 ");
 
     // Define the separators based on the toggle setting, capturing the punctuation
-    let separators = splitAtCommas ? /([.?!,])\s+/ : /([.?!])\s+/;
+    let separators = splitAtCommas ? /([.?!,])\s+/g : /([.?!])\s+/g; // Added global flag for proper split
     
     // Split the content by the defined separators, keeping the punctuation mark in the result array
     let potentialSegments = text.split(separators);
@@ -807,7 +788,7 @@ function parseContent(content) {
 
         let trimmedSegment = segment.trim();
 
-        // 🎯 FIX: Explicitly ignore segments that are only punctuation marks
+        // FIX: Explicitly ignore segments that are only punctuation marks
         if (trimmedSegment.length === 1 && trimmedSegment.match(/[.?!,]/)) continue;
         
         // Check if the segment ends in a known abbreviation
@@ -845,7 +826,7 @@ function parseContent(content) {
         return trimmed;
     }).filter(s => s.length > 0);
 }
-// 💥 END OF CORRECTION: SMARTER CONTENT PARSING 💥
+
 
 function applyVideoTransform() {
   const transforms = [];
@@ -863,45 +844,17 @@ function hideCompletionOverlay() {
   completeOverlay.style.display = 'none';
 }
 
-/* ---------- Auto-Save & Load ---------- */
-function saveDraft() {
-    localStorage.setItem(STORAGE_KEY, contentInput.value);
-}
-
-function loadDraft() {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-        contentInput.value = saved;
-        updatePreview();
-    }
-}
-document.addEventListener('DOMContentLoaded', loadDraft);
-
-/* ---------- Enhanced Preview & Estimate ---------- */
+/* ---------- Preview updates ---------- */
 function updatePreview() {
   const content = contentInput.value;
-  saveDraft(); // Auto-save on input
-
   if (content.trim()) {
     lines = parseContent(content);
     segmentCount.textContent = `${lines.length} segments detected`;
-
-    // Time Estimate Logic
-    const msPerSegment = parseInt(customSpeedInput.value) || 3500;
-    const totalMs = lines.length * msPerSegment;
-    const totalSec = Math.floor(totalMs / 1000);
-    const min = Math.floor(totalSec / 60);
-    const sec = totalSec % 60;
-    
-    timeEstimateBadge.style.display = 'block';
-    timeEstimateBadge.textContent = `Est. Duration: ${min}:${sec.toString().padStart(2, '0')}`;
-    
     startBtn.disabled = false;
     previewContainer.style.display = 'block';
     parsedPreview.textContent = lines.join('\n\n');
   } else {
     segmentCount.textContent = 'Content will be split into segments';
-    timeEstimateBadge.style.display = 'none';
     startBtn.disabled = true;
     previewContainer.style.display = 'none';
   }
@@ -917,7 +870,6 @@ document.querySelectorAll('#setupScreen .speed-btn').forEach(btn => {
     speedPreset = btn.dataset.speed;
     currentSpeed = speedPresets[speedPreset];
     customSpeedInput.value = currentSpeed;
-    setTimeout(updatePreview, 50); // Recalculate estimate
   });
 });
 
@@ -934,19 +886,12 @@ document.querySelectorAll('#readingScreen .speed-btn').forEach(btn => {
 
 customSpeedInput.addEventListener('input', () => {
   const v = parseInt(customSpeedInput.value);
-  if (v >= 500 && v <= 10000) { currentSpeed = v; updatePreview(); }
+  if (v >= 500 && v <= 10000) currentSpeed = v;
 });
 
 speedInput.addEventListener('input', () => {
   const v = parseInt(speedInput.value);
   if (v >= 500 && v <= 10000) { currentSpeed = v; restartScrolling(); }
-});
-
-/* ---------- Font Size Slider ---------- */
-fontSizeSlider.addEventListener('input', (e) => {
-    const newVal = e.target.value + 'rem';
-    prompterContent.style.fontSize = newVal;
-    setTimeout(scrollToCenter, 100); // Re-center after size change
 });
 
 /* ---------- Mirror/Flip ---------- */
@@ -1140,8 +1085,37 @@ function scrollToCenter() {
   prompter.scrollBy({ top: scrollOffset, behavior: 'smooth' });
 }
 
-/* ---------- Scrolling ---------- */
-function startScrolling() {
+/* ---------- Countdown Timer (NEW) ---------- */
+function startCountdown() {
+    let count = 3;
+    countdownOverlay.style.opacity = 1;
+    countdownNumber.textContent = count;
+
+    const timer = setInterval(() => {
+        count--;
+        if (count > 0) {
+            countdownNumber.textContent = count;
+            // Re-trigger animation for pulse effect
+            countdownNumber.style.animation = 'none';
+            void countdownNumber.offsetWidth; // Trigger reflow
+            countdownNumber.style.animation = 'countdownPulse 1s ease-in-out';
+        } else if (count === 0) {
+            countdownNumber.textContent = 'GO!';
+            // Final pulse
+            countdownNumber.style.animation = 'none';
+            void countdownNumber.offsetWidth;
+            countdownNumber.style.animation = 'countdownPulse 1s ease-in-out';
+        } else {
+            clearInterval(timer);
+            countdownOverlay.style.opacity = 0;
+            // Now start the actual scrolling
+            startScrollingInternal();
+        }
+    }, 1000);
+}
+
+/* ---------- Scrolling (RENAMED) ---------- */
+function startScrollingInternal() {
   isScrolling = true;
   pauseBtn.textContent = '⏸ Pause';
   scrollInterval = setInterval(() => {
@@ -1166,7 +1140,7 @@ function stopScrolling(completed = false) {
 function restartScrolling() {
   if (!isScrolling) return;
   stopScrolling(false);
-  startScrolling();
+  startScrollingInternal();
 }
 
 function updateDisplay() {
@@ -1185,53 +1159,17 @@ function updatePosition() {
 }
 
 /* ---------- Navigation ---------- */
-pauseBtn.addEventListener('click', () => { isScrolling ? stopScrolling(false) : startScrolling(); });
+// UPDATED: Calls startCountdown() instead of startScrolling()
+pauseBtn.addEventListener('click', () => { isScrolling ? stopScrolling(false) : startCountdown(); });
 prevBtn.addEventListener('click', () => { if (currentLine > 0) { currentLine--; updateDisplay(); } });
 nextBtn.addEventListener('click', () => { if (currentLine < lines.length - 1) { currentLine++; updateDisplay(); } });
-
-/* ---------- Keyboard Hotkeys ---------- */
-document.addEventListener('keydown', (e) => {
-    // Only active if Reading Screen is visible
-    if (readingScreen.style.display === 'none') return;
-
-    if(['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
-        e.preventDefault();
-    }
-
-    switch(e.code) {
-        case 'Space':
-            isScrolling ? stopScrolling(false) : startScrolling();
-            break;
-        case 'ArrowUp':
-            prevBtn.click();
-            break;
-        case 'ArrowDown':
-            nextBtn.click();
-            break;
-        case 'ArrowLeft': // Slower
-            let slower = parseInt(speedInput.value) + 100;
-            if(slower <= 10000) { speedInput.value = slower; speedInput.dispatchEvent(new Event('input')); }
-            break;
-        case 'ArrowRight': // Faster
-            let faster = parseInt(speedInput.value) - 100;
-            if(faster >= 500) { speedInput.value = faster; speedInput.dispatchEvent(new Event('input')); }
-            break;
-        case 'Escape':
-            if(isRecording) {
-                if(confirm("Stop recording and reset?")) resetBtn.click();
-            } else {
-                resetBtn.click();
-            }
-            break;
-    }
-});
 
 /* ---------- Recording ---------- */
 recordBtn.addEventListener('click', () => {
   if (!cameraEnabled || !stream) { alert('Enable camera to record.'); return; }
   if (!isRecording) {
     startRecording();
-    if (!isScrolling) startScrolling();
+    if (!isScrolling) startCountdown(); // Changed to startCountdown
   } else {
     stopRecording();
   }
@@ -1326,5 +1264,8 @@ startBtn.disabled = true;
 setBadge(false);
 updateCameraUI();
 </script>
+
+
+
 </body>
 </html>
