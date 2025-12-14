@@ -380,137 +380,165 @@
             font-size: 0.875rem;
         }
     
-.toggle-btn {
-    background: #4b5563;
-}
-.toggle-btn:hover {
-    background: #374151;
-}
-.toggle-btn.active {
-    background: #10b981;
-}
-.toggle-btn.active:hover {
-    background: #059669;
-}
+        .toggle-btn {
+            background: #4b5563;
+        }
+        .toggle-btn:hover {
+            background: #374151;
+        }
+        .toggle-btn.active {
+            background: #10b981;
+        }
+        .toggle-btn.active:hover {
+            background: #059669;
+        }
 
-.overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.75);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: 1.5rem;
-}
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1.5rem;
+        }
 
-.overlay-card {
-    width: 100%;
-    max-width: 520px;
-    background: #111827;
-    border: 1px solid #374151;
-    border-radius: 1rem;
-    padding: 1.5rem;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    text-align: center;
-}
+        .overlay-card {
+            width: 100%;
+            max-width: 520px;
+            background: #111827;
+            border: 1px solid #374151;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            text-align: center;
+        }
 
-.overlay-card h2 {
-    font-size: 1.75rem;
-    margin-bottom: 0.75rem;
-    background: linear-gradient(135deg, #34d399 0%, #3b82f6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-weight: 800;
-}
+        .overlay-card h2 {
+            font-size: 1.75rem;
+            margin-bottom: 0.75rem;
+            background: linear-gradient(135deg, #34d399 0%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
+        }
 
-.overlay-card p {
-    color: #d1d5db;
-    line-height: 1.6;
-    margin-bottom: 1rem;
-}
+        .overlay-card p {
+            color: #d1d5db;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
 
-.overlay-actions {
-    display: flex;
-    gap: 0.75rem;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-    
-.input-select {
-    padding: 0.6rem 0.75rem;
-    background: #374151;
-    color: white;
-    border: 1px solid #4b5563;
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
-}
+        .overlay-actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+            
+        .input-select {
+            padding: 0.6rem 0.75rem;
+            background: #374151;
+            color: white;
+            border: 1px solid #4b5563;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+        }
 
-.badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.25rem 0.6rem;
-    border-radius: 999px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    border: 1px solid #374151;
-    background: rgba(31, 41, 55, 0.7);
-    color: #d1d5db;
-}
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border: 1px solid #374151;
+            background: rgba(31, 41, 55, 0.7);
+            color: #d1d5db;
+        }
 
-.badge.off {
-    border-color: rgba(220, 38, 38, 0.6);
-    color: #fecaca;
-}
+        .badge.off {
+            border-color: rgba(220, 38, 38, 0.6);
+            color: #fecaca;
+        }
 
-.badge.on {
-    border-color: rgba(16, 185, 129, 0.6);
-    color: #bbf7d0;
-}
+        .badge.on {
+            border-color: rgba(16, 185, 129, 0.6);
+            color: #bbf7d0;
+        }
 
-.camera-off-notice {
-    margin-top: 0.75rem;
-    padding: 0.75rem;
-    border-radius: 0.5rem;
-    border: 1px dashed #4b5563;
-    color: #d1d5db;
-    background: rgba(17, 24, 39, 0.5);
-    font-size: 0.875rem;
-}
+        .camera-off-notice {
+            margin-top: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px dashed #4b5563;
+            color: #d1d5db;
+            background: rgba(17, 24, 39, 0.5);
+            font-size: 0.875rem;
+        }
 
-.countdown-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.8);
-    z-index: 100;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.2s;
-}
+        .countdown-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
 
-.countdown-number {
-    font-size: 15rem;
-    font-weight: 900;
-    color: #10b981;
-    text-shadow: 0 0 40px rgba(16, 185, 129, 0.8);
-    animation: countdownPulse 1s ease-in-out;
-}
+        .countdown-number {
+            font-size: 15rem;
+            font-weight: 900;
+            color: #10b981;
+            text-shadow: 0 0 40px rgba(16, 185, 129, 0.8);
+            animation: countdownPulse 1s ease-in-out;
+        }
 
-@keyframes countdownPulse {
-    0% { transform: scale(0.5); opacity: 0; }
-    50% { transform: scale(1.1); opacity: 1; }
-    100% { transform: scale(1); opacity: 1; }
-}
+        @keyframes countdownPulse {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
 
-</style>
+        /* NEW CSS for Notification Toast */
+        .notification-toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #f87171; /* Default error color */
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s;
+            font-size: 1rem;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .notification-toast.error {
+            background-color: #dc2626; /* Red for errors */
+        }
+
+        .notification-toast.success {
+            background-color: #10b981; /* Green for success (optional, but good practice) */
+        }
+        /* END NEW CSS */
+
+    </style>
 </head>
 <body>
     <div class="setup-screen" id="setupScreen">
@@ -621,6 +649,7 @@
     <input type="range" id="fontSizeRange" min="2" max="6" step="0.1" value="3.5" style="width: 80px;">
     <span style="color:#9ca3af; font-size:1.5rem;">A</span>
 </div>
+
 <select id="cameraSelectReading" class="input-select" style="display:none; min-width: 10rem;"><option value="">Camera: Default</option></select>
 <select id="micSelectReading" class="input-select" style="display:none; min-width: 10rem;"><option value="">Mic: Default</option></select>
 
@@ -661,7 +690,7 @@
     </div>
 </div>
 
-    
+<div class="notification-toast" id="notificationToast"></div>
 <script>
 /* =========================
    KIN Pro Teleprompter
@@ -673,6 +702,7 @@
    - Content Parsing Fix
    - Countdown Timer
    - Font Size Control (re-added)
+   - Smooth Error Notification (NEW)
    ========================= */
 
 let lines = [];
@@ -736,7 +766,7 @@ const cameraOffNotice = document.getElementById('cameraOffNotice');
 // Reading selectors
 const cameraSelectReading = document.getElementById('cameraSelectReading');
 const micSelectReading = document.getElementById('micSelectReading');
-const fontSizeRange = document.getElementById('fontSizeRange'); // FONT SIZE: New element reference
+const fontSizeRange = document.getElementById('fontSizeRange');
 
 // Mirror/Flip + overlay elements
 const mirrorBtn = document.getElementById('mirrorBtn');
@@ -750,6 +780,9 @@ const overlayDownloadBtn = document.getElementById('overlayDownloadBtn');
 // Countdown elements
 const countdownOverlay = document.getElementById('countdownOverlay');
 const countdownNumber = document.getElementById('countdownNumber');
+
+// NEW: Notification Toast element
+const notificationToast = document.getElementById('notificationToast');
 
 /* ---------- Helpers ---------- */
 function setBadge(on) {
@@ -771,17 +804,29 @@ function updateCameraUI() {
   if (micSelectReading) micSelectReading.style.display = showSelectors ? 'inline-flex' : 'none';
 }
 
-// FONT SIZE: New function to update font size
 function updateFontSize() {
     currentFontSize = parseFloat(fontSizeRange.value);
-    // Set CSS Variable on the content container
     prompterContent.style.setProperty('--current-font-size', `${currentFontSize}rem`);
 }
-// FONT SIZE: Event Listener
 if (fontSizeRange) {
     fontSizeRange.addEventListener('input', updateFontSize);
-    updateFontSize(); // Call once on load to set initial value
+    updateFontSize();
 }
+
+/* ---------- Notification Toast (NEW) ---------- */
+function showNotification(message, isError = true, duration = 4000) {
+    notificationToast.textContent = message;
+    notificationToast.classList.remove('error', 'success');
+    notificationToast.classList.add(isError ? 'error' : 'success');
+    notificationToast.style.bottom = '20px';
+    notificationToast.style.opacity = 1;
+
+    setTimeout(() => {
+        notificationToast.style.opacity = 0;
+        notificationToast.style.bottom = '0px';
+    }, duration);
+}
+
 
 // CORRECTED parseContent function
 function parseContent(content) {
@@ -1020,7 +1065,8 @@ async function startMediaStream() {
     applyVideoTransform();
     updateCameraUI();
   } catch (error) {
-    alert('Could not access camera/microphone: ' + error.message);
+    // REPLACED ALERT WITH NOTIFICATION
+    showNotification('Error accessing camera/microphone. Please ensure you have given permission and selected a valid device. Error: ' + error.name, true);
     cameraEnabled = false;
     cameraModeSelect.value = 'off';
     inputSelectContainer.style.display = 'none';
@@ -1070,7 +1116,6 @@ startBtn.addEventListener('click', async () => {
     btn.classList.toggle('active', btn.dataset.speed === speedPreset);
   });
   
-  // FONT SIZE: Ensure font size is set from slider value
   updateFontSize();
 
   currentLine = 0;
@@ -1109,7 +1154,7 @@ function scrollToCenter() {
   prompter.scrollBy({ top: scrollOffset, behavior: 'smooth' });
 }
 
-/* ---------- Countdown Timer (NEW) ---------- */
+/* ---------- Countdown Timer ---------- */
 function startCountdown() {
     let count = 3;
     countdownOverlay.style.opacity = 1;
@@ -1119,26 +1164,23 @@ function startCountdown() {
         count--;
         if (count > 0) {
             countdownNumber.textContent = count;
-            // Re-trigger animation for pulse effect
             countdownNumber.style.animation = 'none';
-            void countdownNumber.offsetWidth; // Trigger reflow
+            void countdownNumber.offsetWidth;
             countdownNumber.style.animation = 'countdownPulse 1s ease-in-out';
         } else if (count === 0) {
             countdownNumber.textContent = 'GO!';
-            // Final pulse
             countdownNumber.style.animation = 'none';
             void countdownNumber.offsetWidth;
             countdownNumber.style.animation = 'countdownPulse 1s ease-in-out';
         } else {
             clearInterval(timer);
             countdownOverlay.style.opacity = 0;
-            // Now start the actual scrolling
             startScrollingInternal();
         }
     }, 1000);
 }
 
-/* ---------- Scrolling (RENAMED) ---------- */
+/* ---------- Scrolling ---------- */
 function startScrollingInternal() {
   isScrolling = true;
   pauseBtn.textContent = '⏸ Pause';
@@ -1189,7 +1231,11 @@ nextBtn.addEventListener('click', () => { if (currentLine < lines.length - 1) { 
 
 /* ---------- Recording ---------- */
 recordBtn.addEventListener('click', () => {
-  if (!cameraEnabled || !stream) { alert('Enable camera to record.'); return; }
+  if (!cameraEnabled || !stream) { 
+    // REPLACED ALERT WITH NOTIFICATION
+    showNotification('Please enable the camera and allow access to start recording.', true);
+    return; 
+  }
   if (!isRecording) {
     startRecording();
     if (!isScrolling) startCountdown();
@@ -1229,7 +1275,8 @@ function startRecording() {
     }, 1000);
 
   } catch (error) {
-    alert('Could not start recording: ' + error.message);
+    // REPLACED ALERT WITH NOTIFICATION
+    showNotification('Could not start recording. Your browser may not support the necessary video formats. Error: ' + error.message, true);
   }
 }
 
@@ -1277,7 +1324,6 @@ resetBtn.addEventListener('click', () => {
   inputSelectContainer.style.display = 'none';
   setBadge(false);
   
-  // FONT SIZE: Reset slider to default
   if (fontSizeRange) fontSizeRange.value = 3.5; 
   updateFontSize();
 
@@ -1290,7 +1336,6 @@ resetBtn.addEventListener('click', () => {
 startBtn.disabled = true;
 setBadge(false);
 updateCameraUI();
-// FONT SIZE: Ensure initial font size is set
 if (fontSizeRange) updateFontSize();
 </script>
 
