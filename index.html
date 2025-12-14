@@ -300,6 +300,8 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 3rem 0;
+            /* FONT SIZE CONTROL: Define CSS variable */
+            --current-font-size: 3.5rem; 
         }
 
         .line {
@@ -311,7 +313,8 @@
         }
 
         .line.current {
-            font-size: 3.5rem;
+            /* FONT SIZE CONTROL: Use CSS variable */
+            font-size: var(--current-font-size);
             font-weight: 700;
             color: white;
             opacity: 1;
@@ -477,7 +480,6 @@
     font-size: 0.875rem;
 }
 
-/* ADDED CSS FOR COUNTDOWN TIMER */
 .countdown-overlay {
     position: absolute;
     top: 0;
@@ -489,7 +491,7 @@
     justify-content: center;
     background: rgba(0, 0, 0, 0.8);
     z-index: 100;
-    pointer-events: none; /* Allows clicks to pass through */
+    pointer-events: none;
     opacity: 0;
     transition: opacity 0.2s;
 }
@@ -507,7 +509,6 @@
     50% { transform: scale(1.1); opacity: 1; }
     100% { transform: scale(1); opacity: 1; }
 }
-/* END ADDED CSS FOR COUNTDOWN TIMER */
 
 </style>
 </head>
@@ -615,6 +616,11 @@
 <button class="control-btn toggle-btn" id="mirrorBtn">🪞 Mirror</button>
 <button class="control-btn toggle-btn" id="flipBtn">↕ Vertical Flip</button>
 
+<div style="display:flex; align-items:center; gap:0.5rem;">
+    <span style="color:#9ca3af; font-size:0.875rem;">A</span>
+    <input type="range" id="fontSizeRange" min="2" max="6" step="0.1" value="3.5" style="width: 80px;">
+    <span style="color:#9ca3af; font-size:1.5rem;">A</span>
+</div>
 <select id="cameraSelectReading" class="input-select" style="display:none; min-width: 10rem;"><option value="">Camera: Default</option></select>
 <select id="micSelectReading" class="input-select" style="display:none; min-width: 10rem;"><option value="">Mic: Default</option></select>
 
@@ -664,8 +670,9 @@
    - Enable camera button on reading screen
    - Camera + microphone selectors (setup + reading)
    - Camera OFF badge in preview panel
-   - Content Parsing Fix (from previous step)
-   - Countdown Timer (this step)
+   - Content Parsing Fix
+   - Countdown Timer
+   - Font Size Control (re-added)
    ========================= */
 
 let lines = [];
@@ -675,6 +682,7 @@ let scrollInterval = null;
 let currentSpeed = 3500;
 let speedPreset = 'medium';
 let splitAtCommas = false;
+let currentFontSize = 3.5; // Initial font size in rem
 
 let mediaRecorder = null;
 let recordedChunks = [];
@@ -728,6 +736,7 @@ const cameraOffNotice = document.getElementById('cameraOffNotice');
 // Reading selectors
 const cameraSelectReading = document.getElementById('cameraSelectReading');
 const micSelectReading = document.getElementById('micSelectReading');
+const fontSizeRange = document.getElementById('fontSizeRange'); // FONT SIZE: New element reference
 
 // Mirror/Flip + overlay elements
 const mirrorBtn = document.getElementById('mirrorBtn');
@@ -738,7 +747,7 @@ const overlayCloseBtn = document.getElementById('overlayCloseBtn');
 const overlayResetBtn = document.getElementById('overlayResetBtn');
 const overlayDownloadBtn = document.getElementById('overlayDownloadBtn');
 
-// New countdown elements
+// Countdown elements
 const countdownOverlay = document.getElementById('countdownOverlay');
 const countdownNumber = document.getElementById('countdownNumber');
 
@@ -762,7 +771,19 @@ function updateCameraUI() {
   if (micSelectReading) micSelectReading.style.display = showSelectors ? 'inline-flex' : 'none';
 }
 
-// CORRECTED parseContent function (from previous step)
+// FONT SIZE: New function to update font size
+function updateFontSize() {
+    currentFontSize = parseFloat(fontSizeRange.value);
+    // Set CSS Variable on the content container
+    prompterContent.style.setProperty('--current-font-size', `${currentFontSize}rem`);
+}
+// FONT SIZE: Event Listener
+if (fontSizeRange) {
+    fontSizeRange.addEventListener('input', updateFontSize);
+    updateFontSize(); // Call once on load to set initial value
+}
+
+// CORRECTED parseContent function
 function parseContent(content) {
     // List of common abbreviations to prevent splitting (must be lowercase and include the period)
     const ABBREVIATIONS_SET = new Set([
@@ -775,7 +796,7 @@ function parseContent(content) {
     let text = content.replace(/([.?!,])(?=\S)/g, "$1 ");
 
     // Define the separators based on the toggle setting, capturing the punctuation
-    let separators = splitAtCommas ? /([.?!,])\s+/g : /([.?!])\s+/g; // Added global flag for proper split
+    let separators = splitAtCommas ? /([.?!,])\s+/g : /([.?!])\s+/g;
     
     // Split the content by the defined separators, keeping the punctuation mark in the result array
     let potentialSegments = text.split(separators);
@@ -1048,6 +1069,9 @@ startBtn.addEventListener('click', async () => {
   document.querySelectorAll('#readingScreen .speed-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.speed === speedPreset);
   });
+  
+  // FONT SIZE: Ensure font size is set from slider value
+  updateFontSize();
 
   currentLine = 0;
   renderContent();
@@ -1159,7 +1183,6 @@ function updatePosition() {
 }
 
 /* ---------- Navigation ---------- */
-// UPDATED: Calls startCountdown() instead of startScrolling()
 pauseBtn.addEventListener('click', () => { isScrolling ? stopScrolling(false) : startCountdown(); });
 prevBtn.addEventListener('click', () => { if (currentLine > 0) { currentLine--; updateDisplay(); } });
 nextBtn.addEventListener('click', () => { if (currentLine < lines.length - 1) { currentLine++; updateDisplay(); } });
@@ -1169,7 +1192,7 @@ recordBtn.addEventListener('click', () => {
   if (!cameraEnabled || !stream) { alert('Enable camera to record.'); return; }
   if (!isRecording) {
     startRecording();
-    if (!isScrolling) startCountdown(); // Changed to startCountdown
+    if (!isScrolling) startCountdown();
   } else {
     stopRecording();
   }
@@ -1253,6 +1276,10 @@ resetBtn.addEventListener('click', () => {
   cameraModeSelect.value = 'off';
   inputSelectContainer.style.display = 'none';
   setBadge(false);
+  
+  // FONT SIZE: Reset slider to default
+  if (fontSizeRange) fontSizeRange.value = 3.5; 
+  updateFontSize();
 
   setupScreen.style.display = 'block';
   readingScreen.style.display = 'none';
@@ -1263,6 +1290,8 @@ resetBtn.addEventListener('click', () => {
 startBtn.disabled = true;
 setBadge(false);
 updateCameraUI();
+// FONT SIZE: Ensure initial font size is set
+if (fontSizeRange) updateFontSize();
 </script>
 
 
