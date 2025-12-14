@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KIN Pro Teleprompter - With Recording</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #111827 0%, #1f2937 50%, #111827 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #34d399 0%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .logo-container {
+            position: relative;
+        }
+
+        .logo-glow {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+            filter: blur(40px);
+            opacity: 0.3;
+        }
+
+        .logo img {
+            position: relative;
+            height: 4rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #9ca3af;
+            font-size: 1.125rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .powered-by {
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-bottom: 2rem;
+        }
+
+        .setup-screen {
+            display: block;
+        }
+
+        .reading-screen {
+            display: none;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        textarea {
+            width: 100%;
+            height: 400px;
+            padding: 1.25rem;
+            background: rgba(17, 24, 39, 0.8);
+            color: white;
+            border: 1px solid #374151;
+            border-radius: 0.75rem;
+            font-size: 1.125rem;
+            line-height: 1.6;
+            resize: none;
+            transition: all 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .speed-buttons {
+            display: flex;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .speed-btn {
+            flex: 1;
+            padding: 0.75rem;
+            background: #1f2937;
+            color: #d1d5db;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: capitalize;
+        }
+
+        .speed-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .speed-btn:hover {
+            background: #374151;
+        }
+
+        .speed-btn.active:hover {
+            background: #2563eb;
+        }
+
+        .fine-tune {
+            margin: 1.5rem 0;
+        }
+
+        .fine-tune label {
+            display: block;
+            font-size: 0.875rem;
+            color: #9ca3af;
+            margin-bottom: 0.5rem;
+        }
+
+        .fine-tune input {
+            width: 100%;
+            padding: 0.75rem;
+            background: #1f2937;
+            color: white;
+            border: 1px solid #374151;
+            border-radius: 0.5rem;
+        }
+
+        .fine-tune input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .start-btn {
+            width: 100%;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 1.5rem;
+            transition: all 0.3s;
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.2);
+        }
+
+        .start-btn:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: scale(1.02);
+        }
+
+        .start-btn:disabled {
+            background: #374151;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: scale(1);
+        }
+
+        .footer {
+            margin-top: 3rem;
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.875rem;
+            padding: 2rem 0;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            font-size: 0.75rem;
+        }
+
+        .footer-links a {
+            color: #6b7280;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: #10b981;
+        }
+
+        .controls {
+            background: #1f2937;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            border-bottom: 1px solid #374151;
+            flex-wrap: wrap;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .control-btn {
+            padding: 0.75rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .control-btn:hover {
+            background: #2563eb;
+        }
+
+        .control-btn:disabled {
+            background: #374151;
+            cursor: not-allowed;
+        }
+
+        .record-btn {
+            background: #dc2626;
+        }
+
+        .record-btn:hover {
+            background: #b91c1c;
+        }
+
+        .record-btn.recording {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .download-btn {
+            background: #10b981;
+        }
+
+        .download-btn:hover {
+            background: #059669;
+        }
+
+        .reset-btn {
+            background: #4b5563;
+        }
+
+        .reset-btn:hover {
+            background: #374151;
+        }
+
+        .content-area {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .prompter {
+            flex: 1;
+            overflow-y: auto;
+            background: black;
+            padding: 2rem;
+            scroll-behavior: smooth;
+        }
+
+        .prompter-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 0;
+        }
+
+        .line {
+            margin: 2rem 0;
+            padding: 1.5rem 2rem;
+            border-radius: 0.5rem;
+            transition: all 0.7s;
+            line-height: 1.6;
+        }
+
+        .line.current {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: white;
+            opacity: 1;
+            background: rgba(31, 41, 55, 0.5);
+            border-left: 4px solid #3b82f6;
+        }
+
+        .line.past {
+            font-size: 1.5rem;
+            color: #4b5563;
+            opacity: 0.3;
+        }
+
+        .line.future {
+            font-size: 1.5rem;
+            color: #374151;
+            opacity: 0.2;
+        }
+
+        .camera-panel {
+            width: 320px;
+            background: #1f2937;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .camera-panel h3 {
+            margin-bottom: 1rem;
+        }
+
+        video {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: black;
+            border-radius: 0.5rem;
+        }
+
+        .info {
+            font-size: 0.875rem;
+            color: #9ca3af;
+            margin-top: 1rem;
+        }
+
+        .segment-count {
+            font-size: 0.875rem;
+            color: #9ca3af;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .speed-input {
+            width: 6rem;
+            padding: 0.5rem;
+            background: #374151;
+            color: white;
+            border: 1px solid #4b5563;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+        }
+    
+.toggle-btn {
+    background: #4b5563;
+}
+.toggle-btn:hover {
+    background: #374151;
+}
+.toggle-btn.active {
+    background: #10b981;
+}
+.toggle-btn.active:hover {
+    background: #059669;
+}
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1.5rem;
+}
+
+.overlay-card {
+    width: 100%;
+    max-width: 520px;
+    background: #111827;
+    border: 1px solid #374151;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    text-align: center;
+}
+
+.overlay-card h2 {
+    font-size: 1.75rem;
+    margin-bottom: 0.75rem;
+    background: linear-gradient(135deg, #34d399 0%, #3b82f6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+}
+
+.overlay-card p {
+    color: #d1d5db;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.overlay-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+    </style>
+</head>
+<body>
+    <div class="setup-screen" id="setupScreen">
+        <div class="container">
+            <div class="logo">
+                <div class="logo-container">
+                    <div class="logo-glow"></div>
+                    <img src="https://cdn.prod.website-files.com/64c7f774c3d8ed1447eec09b/6598dbcd2473ac6bf1c40227_Untitled%20design%20(20).png" alt="KIN Creative" style="position: relative; height: 80px; width: 80px;">
+                </div>
+            </div>
+            <h1>KIN Pro Teleprompter</h1>
+            <p class="subtitle">Record like a professional with smooth, centered scrolling</p>
+            <p class="powered-by">Powered by KIN Creative</p>
+            
+            <div>
+                <label style="display: block; font-size: 1.125rem; margin-bottom: 0.5rem;">Paste Your Content</label>
+                <textarea id="contentInput" placeholder="Paste your blog post content here..." style="height: 12rem;"></textarea>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                    <p class="segment-count" id="segmentCount">Content will be split into segments</p>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #9ca3af; cursor: pointer;">
+                        <input type="checkbox" id="commaToggle" style="width: 1rem; height: 1rem; cursor: pointer;">
+                        Split at commas too
+                    </label>
+                </div>
+            </div>
+
+            <div id="previewContainer" style="display: none;">
+                <label style="display: block; font-size: 1.125rem; margin-bottom: 0.5rem;">Preview (how it will appear)</label>
+                <div id="parsedPreview" style="width: 100%; height: 12rem; padding: 1rem; background: rgba(31, 41, 55, 0.5); color: #d1d5db; border-radius: 0.5rem; border: 1px solid #374151; overflow-y: auto; white-space: pre-wrap; line-height: 1.6;"></div>
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 1.125rem; margin: 1.5rem 0 0.75rem;">Scroll Speed</label>
+                <div class="speed-buttons">
+                    <button class="speed-btn" data-speed="slow">Slow</button>
+                    <button class="speed-btn active" data-speed="medium">Medium</button>
+                    <button class="speed-btn" data-speed="fast">Fast</button>
+                </div>
+                <div class="fine-tune">
+                    <label>Fine-tune speed (milliseconds per segment)</label>
+                    <input type="number" id="customSpeed" min="500" max="10000" step="100" value="3500">
+                    <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem;">Lower = faster (500-10000ms)</p>
+                </div>
+            </div>
+
+            <button class="start-btn" id="startBtn">⏵ Start Reading & Enable Camera</button>
+
+            <div class="footer">
+                <p>© 2025 KIN Creative - Family Above All</p>
+                <div class="footer-links">
+                    <a href="https://www.kincreative.io" target="_blank">Visit KIN Creative</a>
+                    <span>•</span>
+                    <a href="https://www.kincreative.io/privacy-policy" target="_blank">Privacy Policy</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="reading-screen" id="readingScreen">
+        <div class="controls">
+            <button class="control-btn" id="pauseBtn">⏸ Pause</button>
+            <button class="control-btn" id="prevBtn">⏫ Previous</button>
+            <button class="control-btn" id="nextBtn">⏬ Next</button>
+            <button class="record-btn control-btn" id="recordBtn">⏺ Record</button>
+            <button class="download-btn control-btn" id="downloadBtn" style="display: none;">⬇ Download</button>
+            <button class="reset-btn control-btn" id="resetBtn">↻ Reset</button>
+            
+            <div class="speed-buttons">
+                <button class="speed-btn" data-speed="slow">Slow</button>
+                <button class="speed-btn active" data-speed="medium">Medium</button>
+                <button class="speed-btn" data-speed="fast">Fast</button>
+            </div>
+            
+            <div class="speed-control">
+                <input type="number" class="speed-input" id="speedInput" min="500" max="10000" step="100" value="3500">
+                <span style="font-size: 0.75rem; color: #9ca3af;">ms</span>
+            </div>
+            
+            
+<button class="control-btn toggle-btn" id="mirrorBtn">🪞 Mirror</button>
+<button class="control-btn toggle-btn" id="flipBtn">↕ Vertical Flip</button>
+
+<span class="segment-count" id="positionIndicator">Segment 1 of 1</span>
+        </div>
+
+        <div class="content-area">
+            <div class="prompter" id="prompter">
+                <div class="prompter-content" id="prompterContent"></div>
+            </div>
+            
+            <div class="camera-panel">
+                <h3>Camera Preview</h3>
+                <video id="videoPreview" autoplay muted playsinline></video>
+                <div class="info">
+                    <p>• Click Record to start capturing</p>
+                    <p>• Recording timer shows duration</p>
+                    <p>• Download when finished</p>
+                    <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.75rem;">Video saves as .webm format</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div class="overlay" id="completeOverlay" role="dialog" aria-modal="true" aria-labelledby="completeTitle">
+    <div class="overlay-card">
+        <h2 id="completeTitle">Recording complete</h2>
+        <p>You’ve reached the end of your script. Your recording has been stopped automatically (if it was running). You can download it now, or reset to record again.</p>
+        <div class="overlay-actions">
+            <button class="download-btn control-btn" id="overlayDownloadBtn" style="display: none;">⬇ Download</button>
+            <button class="control-btn" id="overlayCloseBtn">Continue</button>
+            <button class="reset-btn control-btn" id="overlayResetBtn">↻ Reset</button>
+        </div>
+    </div>
+</div>
+
+    <script>
+        let lines = [];
+        let currentLine = 0;
+        let isScrolling = false;
+        let scrollInterval = null;
+        let currentSpeed = 3500;
+        let speedPreset = 'medium';
+        let splitAtCommas = false;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let stream = null;
+        let isRecording = false;
+        let recordingTimer = null;
+        let recordingTime = 0;
+        let isMirrored = false;
+        let isFlipped = false;
+
+        const speedPresets = {
+            slow: 3000,
+            medium: 3500,
+            fast: 1500
+        };
+
+        // Setup screen elements
+        const contentInput = document.getElementById('contentInput');
+        const segmentCount = document.getElementById('segmentCount');
+        const parsedPreview = document.getElementById('parsedPreview');
+        const previewContainer = document.getElementById('previewContainer');
+        const commaToggle = document.getElementById('commaToggle');
+        const customSpeedInput = document.getElementById('customSpeed');
+        const startBtn = document.getElementById('startBtn');
+        const setupScreen = document.getElementById('setupScreen');
+        const readingScreen = document.getElementById('readingScreen');
+
+        // Reading screen elements
+        const pauseBtn = document.getElementById('pauseBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const recordBtn = document.getElementById('recordBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const speedInput = document.getElementById('speedInput');
+        const positionIndicator = document.getElementById('positionIndicator');
+        const prompterContent = document.getElementById('prompterContent');
+        const videoPreview = document.getElementById('videoPreview');
+        const prompter = document.getElementById('prompter');
+
+const mirrorBtn = document.getElementById('mirrorBtn');
+const flipBtn = document.getElementById('flipBtn');
+
+const completeOverlay = document.getElementById('completeOverlay');
+const overlayCloseBtn = document.getElementById('overlayCloseBtn');
+const overlayResetBtn = document.getElementById('overlayResetBtn');
+const overlayDownloadBtn = document.getElementById('overlayDownloadBtn');
+
+
+        // Update segment count and preview
+        function updatePreview() {
+            const content = contentInput.value;
+            if (content.trim()) {
+                lines = parseContent(content);
+                segmentCount.textContent = `${lines.length} segments detected`;
+                startBtn.disabled = false;
+                
+                // Show preview
+                previewContainer.style.display = 'block';
+                parsedPreview.textContent = lines.join('\n\n');
+            } else {
+                segmentCount.textContent = 'Content will be split into segments';
+                startBtn.disabled = true;
+                previewContainer.style.display = 'none';
+            }
+        }
+
+        contentInput.addEventListener('input', updatePreview);
+        
+        commaToggle.addEventListener('change', () => {
+            splitAtCommas = commaToggle.checked;
+            updatePreview();
+        });
+
+        // Speed preset buttons (setup screen)
+        document.querySelectorAll('#setupScreen .speed-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#setupScreen .speed-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                speedPreset = btn.dataset.speed;
+                currentSpeed = speedPresets[speedPreset];
+                customSpeedInput.value = currentSpeed;
+            });
+        });
+
+        // Speed preset buttons (reading screen)
+        document.querySelectorAll('#readingScreen .speed-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#readingScreen .speed-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                speedPreset = btn.dataset.speed;
+                currentSpeed = speedPresets[speedPreset];
+                speedInput.value = currentSpeed;
+                restartScrolling();
+            });
+        });
+
+        // Custom speed input
+        customSpeedInput.addEventListener('input', () => {
+            const value = parseInt(customSpeedInput.value);
+            if (value >= 500 && value <= 10000) {
+                currentSpeed = value;
+            }
+        });
+
+        speedInput.addEventListener('input', () => {
+            const value = parseInt(speedInput.value);
+            if (value >= 500 && value <= 10000) {
+                currentSpeed = value;
+                restartScrolling();
+            }
+        });
+
+
+mirrorBtn.addEventListener('click', () => {
+    isMirrored = !isMirrored;
+    mirrorBtn.classList.toggle('active', isMirrored);
+    applyVideoTransform();
+});
+
+flipBtn.addEventListener('click', () => {
+    isFlipped = !isFlipped;
+    flipBtn.classList.toggle('active', isFlipped);
+    applyVideoTransform();
+});
+
+overlayCloseBtn.addEventListener('click', hideCompletionOverlay);
+overlayResetBtn.addEventListener('click', () => {
+    hideCompletionOverlay();
+    resetBtn.click();
+});
+overlayDownloadBtn.addEventListener('click', () => downloadBtn.click());
+
+
+        function parseContent(content) {
+            return content
+                .split(splitAtCommas ? /[.!?,]+/ : /[.!?]+/)
+                .map(sentence => sentence.trim())
+                .filter(sentence => sentence.length > 0)
+                .map(sentence => {
+                    // Add back the punctuation if it doesn't already have it
+                    const lastChar = sentence[sentence.length - 1];
+                    if (!['.', '!', '?', ','].includes(lastChar)) {
+                        return sentence + '.';
+                    }
+                    return sentence;
+                });
+        }
+
+
+function applyVideoTransform() {
+    const transforms = [];
+    if (isMirrored) transforms.push('scaleX(-1)');
+    if (isFlipped) transforms.push('scaleY(-1)');
+    videoPreview.style.transform = transforms.length ? transforms.join(' ') : 'none';
+}
+
+function showCompletionOverlay() {
+    // Mirror download visibility with main download button
+    overlayDownloadBtn.style.display = (downloadBtn.style.display === 'none') ? 'none' : 'flex';
+    completeOverlay.style.display = 'flex';
+}
+
+function hideCompletionOverlay() {
+    completeOverlay.style.display = 'none';
+}
+
+                async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                videoPreview.srcObject = stream;
+                applyVideoTransform();
+            } catch (error) {
+                alert('Could not access camera: ' + error.message);
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+        }
+
+        startBtn.addEventListener('click', async () => {
+            lines = parseContent(contentInput.value);
+            if (lines.length === 0) return;
+
+            await startCamera();
+            setupScreen.style.display = 'none';
+            readingScreen.style.display = 'flex';
+            
+            // Sync speed input on reading screen with setup screen value
+            speedInput.value = customSpeedInput.value;
+            
+            // Update speed preset buttons on reading screen
+            document.querySelectorAll('#readingScreen .speed-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.speed === speedPreset) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            renderContent();
+            // Don't start scrolling automatically - wait for record button
+            isScrolling = false;
+            pauseBtn.textContent = '▶ Start';
+        });
+
+        function renderContent() {
+            const topPadding = '<div style="height: 50vh;"></div>';
+            const bottomPadding = '<div style="height: 50vh;"></div>';
+            
+            prompterContent.innerHTML = topPadding + lines.map((line, index) => 
+                `<div class="line ${index === 0 ? 'current' : 'future'}" data-index="${index}">${line.trim()}</div>`
+            ).join('') + bottomPadding;
+            updatePosition();
+            scrollToCenter();
+        }
+
+        function scrollToCenter() {
+            const container = prompter;
+            const activeElement = container.querySelector(`[data-index="${currentLine}"]`);
+            if (activeElement) {
+                const containerRect = container.getBoundingClientRect();
+                const elementRect = activeElement.getBoundingClientRect();
+                const containerCenter = containerRect.height / 2;
+                const elementCenter = elementRect.height / 2;
+                const scrollOffset = elementRect.top - containerRect.top - containerCenter + elementCenter;
+                
+                container.scrollBy({
+                    top: scrollOffset,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        function startScrolling() {
+            isScrolling = true;
+            pauseBtn.textContent = '⏸ Pause';
+            
+            scrollInterval = setInterval(() => {
+                if (currentLine < lines.length - 1) {
+                    currentLine++;
+                    updateDisplay();
+                } else {
+                    stopScrolling(true);
+                }
+            }, currentSpeed);
+        }
+
+        function stopScrolling(completed = false) {
+            isScrolling = false;
+            pauseBtn.textContent = '▶ Resume';
+            if (scrollInterval) {
+                clearInterval(scrollInterval);
+                scrollInterval = null;
+            }
+
+if (completed) {
+    // If we reach the end while recording, stop recording automatically
+    if (isRecording) {
+        stopRecording();
+    }
+    showCompletionOverlay();
+}
+        }
+
+        function restartScrolling() {
+            if (isScrolling) {
+                stopScrolling();
+                startScrolling();
+            }
+        }
+
+        function updateDisplay() {
+            const lineElements = document.querySelectorAll('.line');
+            lineElements.forEach((el, index) => {
+                el.classList.remove('current', 'past', 'future');
+                if (index === currentLine) {
+                    el.classList.add('current');
+                } else if (index < currentLine) {
+                    el.classList.add('past');
+                } else {
+                    el.classList.add('future');
+                }
+            });
+            scrollToCenter();
+            updatePosition();
+        }
+
+        function updatePosition() {
+            positionIndicator.textContent = `Segment ${currentLine + 1} of ${lines.length}`;
+        }
+
+        pauseBtn.addEventListener('click', () => {
+            if (isScrolling) {
+                stopScrolling();
+            } else {
+                startScrolling();
+            }
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentLine > 0) {
+                currentLine--;
+                updateDisplay();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentLine < lines.length - 1) {
+                currentLine++;
+                updateDisplay();
+            }
+        });
+
+        recordBtn.addEventListener('click', () => {
+            if (!isRecording) {
+                startRecording();
+                // Start scrolling when recording starts
+                if (!isScrolling) {
+                    startScrolling();
+                }
+            } else {
+                stopRecording();
+            }
+        });
+
+        function startRecording() {
+            if (!stream) {
+                alert('Camera not ready. Please wait.');
+                return;
+            }
+
+            try {
+                let options = {};
+                if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+                    options = { mimeType: 'video/webm;codecs=vp9' };
+                } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
+                    options = { mimeType: 'video/webm;codecs=vp8' };
+                } else if (MediaRecorder.isTypeSupported('video/webm')) {
+                    options = { mimeType: 'video/webm' };
+                }
+
+                mediaRecorder = new MediaRecorder(stream, options);
+                recordedChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    downloadBtn.style.display = 'flex';
+                    if (completeOverlay.style.display === 'flex') {
+                        overlayDownloadBtn.style.display = 'flex';
+                    }
+                };
+
+                mediaRecorder.start(100);
+                isRecording = true;
+                recordBtn.classList.add('recording');
+                recordBtn.textContent = '⏹ Stop (0:00)';
+
+                recordingTime = 0;
+                recordingTimer = setInterval(() => {
+                    recordingTime++;
+                    const mins = Math.floor(recordingTime / 60);
+                    const secs = recordingTime % 60;
+                    recordBtn.textContent = `⏹ Stop (${mins}:${secs.toString().padStart(2, '0')})`;
+                }, 1000);
+            } catch (error) {
+                alert('Could not start recording: ' + error.message);
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                recordBtn.classList.remove('recording');
+                recordBtn.textContent = '⏺ Record';
+                
+                if (recordingTimer) {
+                    clearInterval(recordingTimer);
+                    recordingTimer = null;
+                }
+            }
+        }
+
+        downloadBtn.addEventListener('click', () => {
+            if (recordedChunks.length === 0) return;
+            
+            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `teleprompter-recording-${Date.now()}.webm`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        resetBtn.addEventListener('click', () => {
+            stopScrolling();
+            stopRecording();
+            stopCamera();
+            currentLine = 0;
+            recordedChunks = [];
+            downloadBtn.style.display = 'none';
+            hideCompletionOverlay();
+            // Reset video transforms
+            isMirrored = false;
+            isFlipped = false;
+            mirrorBtn.classList.remove('active');
+            flipBtn.classList.remove('active');
+            applyVideoTransform();
+            setupScreen.style.display = 'block';
+            readingScreen.style.display = 'none';
+        });
+    </script>
+
+
+</body>
+</html>
