@@ -83,19 +83,6 @@
             flex-direction: column;
         }
 
-        /* Mobile viewport fix for iOS Safari */
-        @media (max-width: 768px) {
-            body {
-                overflow: hidden;
-                position: fixed;
-                width: 100%;
-            }
-            
-            .reading-screen {
-                height: 100dvh; /* Dynamic viewport height for mobile browsers */
-            }
-        }
-
         textarea {
             width: 100%;
             height: 400px;
@@ -837,6 +824,7 @@
    - Smooth Error Notification (NEW)
    - Estimated Time Feature (RESTORED)
    - Mobile Responsiveness (FIXED)
+   - Scrolling Off-Screen Fix (NEW)
    ========================= */
 
 let lines = [];
@@ -1298,6 +1286,7 @@ startBtn.addEventListener('click', async () => {
 
 /* ---------- Teleprompter ---------- */
 function renderContent() {
+  // Use 50vh top/bottom padding to ensure content can scroll to the center
   const topPadding = '<div style="height: 50vh;"></div>';
   const bottomPadding = '<div style="height: 50vh;"></div>';
   prompterContent.innerHTML = topPadding + lines.map((line, index) =>
@@ -1309,9 +1298,13 @@ function renderContent() {
 
 function scrollToCenter() {
   const active = prompter.querySelector(`[data-index="${currentLine}"]`);
-  if (!active) return;
+  
+  // NEW FIX: Only attempt to scroll if the 'currentLine' is a valid index.
+  if (!active || currentLine >= lines.length) return; 
+
   const cRect = prompter.getBoundingClientRect();
   const eRect = active.getBoundingClientRect();
+  // Calculate the scroll offset to move the current line to the center of the prompter view
   const scrollOffset = (eRect.top - cRect.top) - (cRect.height / 2) + (eRect.height / 2);
   prompter.scrollBy({ top: scrollOffset, behavior: 'smooth' });
 }
@@ -1347,8 +1340,8 @@ function startScrollingInternal() {
   isScrolling = true;
   pauseBtn.textContent = '⏸ Pause';
   scrollInterval = setInterval(() => {
-    // OLD: if (currentLine < lines.length - 1) {
-    if (currentLine < lines.length) { // FIX: Allow scrolling until after the final line has been displayed
+    // FIX: Allow scrolling until AFTER the final line (lines.length - 1) has been displayed
+    if (currentLine < lines.length) { 
       currentLine++; updateDisplay();
     } else {
       stopScrolling(true);
@@ -1373,20 +1366,21 @@ function restartScrolling() {
 }
 
 function updateDisplay() {
-    // NEW: Stop if we've scrolled past the final segment index
-    if (currentLine >= lines.length) {
-        // If we are past the end, ensure the final segment is still highlighted as 'past' or remains static
-        return; 
-    }
-    
+    // We update the classes only for segments that exist (lines.length - 1 and below)
     document.querySelectorAll('.line').forEach((el, idx) => {
         el.classList.remove('current', 'past', 'future');
         if (idx === currentLine) el.classList.add('current');
         else if (idx < currentLine) el.classList.add('past');
         else el.classList.add('future');
     });
-    scrollToCenter();
-    updatePosition();
+    
+    // This will now only scroll if currentLine is a valid index, due to the fix in scrollToCenter
+    scrollToCenter(); 
+    
+    // Only update the position indicator if we are on a valid line
+    if (currentLine < lines.length) {
+        updatePosition();
+    }
 }
 
 function updatePosition() {
