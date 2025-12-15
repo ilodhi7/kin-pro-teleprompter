@@ -557,12 +557,12 @@
                 <label style="display: block; font-size: 1.125rem; margin-bottom: 0.5rem;">Paste Your Content</label>
                 <textarea id="contentInput" placeholder="Paste your blog post content here..." style="height: 12rem;"></textarea>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
-                    <p class="segment-count" id="segmentCount">Content will be split into segments</p>
-                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #9ca3af; cursor: pointer;">
-                        <input type="checkbox" id="commaToggle" style="width: 1rem; height: 1rem; cursor: pointer;">
-                        Split at commas too
-                    </label>
-                </div>
+                  <p class="segment-count" id="segmentCount">Content will be split into segments</p>
+                  <div id="timeEstimate" class="estimate-badge" style="display:none;">Est: 00:00</div>
+                  <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #9ca3af; cursor: pointer;">
+                      <input type="checkbox" id="commaToggle" style="width: 1rem; height: 1rem; cursor: pointer;"> Split at commas too
+                  </label>
+              </div>
             </div>
 
             <div id="previewContainer" style="display: none;">
@@ -740,6 +740,8 @@ const customSpeedInput = document.getElementById('customSpeed');
 const startBtn = document.getElementById('startBtn');
 const setupScreen = document.getElementById('setupScreen');
 const readingScreen = document.getElementById('readingScreen');
+// ADDED: Element for the time estimate
+const timeEstimate = document.getElementById('timeEstimate');
 
 // New setup inputs
 const cameraModeSelect = document.getElementById('cameraMode');
@@ -827,6 +829,20 @@ function showNotification(message, isError = true, duration = 4000) {
     }, duration);
 }
 
+/* ---------- Estimated Time Calculation (Missing Function) ---------- */
+function updateTimeEstimate(lines) {
+    const totalSegments = lines.length;
+    const totalTimeMs = totalSegments * currentSpeed;
+    const totalSeconds = Math.round(totalTimeMs / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    // Format to MM:SS
+    const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    timeEstimate.textContent = `Est: ${formattedTime}`;
+    // Show the badge only if there is content
+    timeEstimate.style.display = totalSegments > 0 ? 'inline-flex' : 'none';
+}
 
 // CORRECTED parseContent function
 function parseContent(content) {
@@ -913,17 +929,26 @@ function hideCompletionOverlay() {
 /* ---------- Preview updates ---------- */
 function updatePreview() {
   const content = contentInput.value;
-  if (content.trim()) {
-    lines = parseContent(content);
+  // **FIXED: Lines array is now populated**
+  lines = parseContent(content); 
+
+// In index.html, this is the end of the updatePreview function
+if (lines.length > 0) {
     segmentCount.textContent = `${lines.length} segments detected`;
     startBtn.disabled = false;
     previewContainer.style.display = 'block';
     parsedPreview.textContent = lines.join('\n\n');
-  } else {
+    
+    // ADDED: Call the time estimate function
+    updateTimeEstimate(lines);
+} else {
     segmentCount.textContent = 'Content will be split into segments';
     startBtn.disabled = true;
     previewContainer.style.display = 'none';
-  }
+    
+    // ADDED: Call the time estimate function to hide the badge
+    updateTimeEstimate([]); 
+}
 }
 contentInput.addEventListener('input', updatePreview);
 commaToggle.addEventListener('change', () => { splitAtCommas = commaToggle.checked; updatePreview(); });
@@ -951,8 +976,11 @@ document.querySelectorAll('#readingScreen .speed-btn').forEach(btn => {
 });
 
 customSpeedInput.addEventListener('input', () => {
-  const v = parseInt(customSpeedInput.value);
-  if (v >= 500 && v <= 10000) currentSpeed = v;
+    const v = parseInt(customSpeedInput.value);
+    if (v >= 500 && v <= 10000) {
+        currentSpeed = v;
+        updatePreview(); // FIXED: Recalculate estimate on custom speed change
+    }
 });
 
 speedInput.addEventListener('input', () => {
