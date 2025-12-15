@@ -796,6 +796,9 @@
             #cameraDrawerBackdrop.show { display: block; }
         }
 
+
+.camera-drawer-header{display:none;}
+
 </style>
 </head>
 <body>
@@ -1025,8 +1028,14 @@ if (cameraDrawerBtn) {
   });
 }
 
-if (cameraDrawerClose) cameraDrawerClose.addEventListener('click', closeCameraDrawer);
-if (cameraDrawerBackdrop) cameraDrawerBackdrop.addEventListener('click', closeCameraDrawer);
+if (cameraDrawerClose) cameraDrawerClose.addEventListener('click', () => {
+  if (!isMobileView()) return;
+  closeCameraDrawer();
+});
+if (cameraDrawerBackdrop) cameraDrawerBackdrop.addEventListener('click', () => {
+  if (!isMobileView()) return;
+  closeCameraDrawer();
+});
 
 if (enableCameraBtnDrawer) {
   enableCameraBtnDrawer.addEventListener('click', () => {
