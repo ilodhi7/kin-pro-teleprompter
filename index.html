@@ -17,6 +17,14 @@
             color: white;
             min-height: 100vh;
         }
+        html, body { height: 100%; }
+
+        /* When on the reading screen, lock the page to the viewport and scroll only inside the prompter */
+        body.reading-mode {
+            height: 100dvh; /* iOS dynamic viewport height */
+            overflow: hidden;
+        }
+
 
         .container {
             max-width: 1200px;
@@ -79,7 +87,8 @@
 
         .reading-screen {
             display: none;
-            height: 100vh;
+            height: 100dvh;
+            min-height: 0;
             flex-direction: column;
         }
 
@@ -286,6 +295,7 @@
             display: flex;
             flex: 1;
             overflow: hidden;
+        min-height: 0;
         }
 
         .prompter {
@@ -564,8 +574,10 @@
                 /* Main reading area must stack vertically */
                 flex-direction: column;
                 height: auto;
-                overflow: auto; 
-            }
+                overflow: hidden;
+                flex: 1;
+                min-height: 0;
+                }
 
             /* --- Camera Panel (Top 100% Width) --- */
             .camera-panel {
@@ -588,7 +600,10 @@
                 width: 100%;
                 padding: 0 0.5rem; /* Minimal side padding */
                 order: 2; 
-                overflow-y: hidden;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                flex: 1;
+                min-height: 0;
                 
                 /* 1. Make the prompter a flexible container itself */
                 display: flex;
@@ -657,7 +672,48 @@
                 margin-top: 0.5rem;
             }
         }
-    </style>
+    
+/* --- Mobile scrolling fixes (iOS/Chrome emulation) --- */
+@media (max-width: 900px) {
+  /* Make the reading screen a fixed-height flex column */
+  #readingScreen, .reading-screen {
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+  }
+
+  /* This is the main scroll container on mobile (NOT the body) */
+  .content-area {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
+
+  /* Keep prompter scrollable, but don't trap the entire page */
+  .prompter {
+    flex: 1 1 auto !important;
+    min-height: 40vh;            /* ensures it remains usable */
+    max-height: 60vh;            /* prevents endless growth */
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
+
+  /* Prevent the camera panel from becoming too tall */
+  .camera-panel, .camera-preview, .video-panel {
+    max-height: 55vh;
+  }
+
+  video#videoPreview {
+    max-height: 40vh;
+  }
+}
+
+</style>
 </head>
 <body>
     <div class="setup-screen" id="setupScreen">
@@ -1261,6 +1317,8 @@ startBtn.addEventListener('click', async () => {
 
   setupScreen.style.display = 'none';
   readingScreen.style.display = 'flex';
+  document.body.classList.add('reading-mode');
+  document.body.classList.add('reading-mode');
 
   document.querySelectorAll('#readingScreen .speed-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.speed === speedPreset);
@@ -1490,8 +1548,10 @@ resetBtn.addEventListener('click', () => {
   if (fontSizeRange) fontSizeRange.value = 3.5; 
   updateFontSize();
 
+  document.body.classList.remove('reading-mode');
   setupScreen.style.display = 'block';
   readingScreen.style.display = 'none';
+  document.body.classList.remove('reading-mode');
   updateCameraUI();
 });
 
