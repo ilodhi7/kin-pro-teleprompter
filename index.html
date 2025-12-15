@@ -331,16 +331,16 @@
         }
 
         .line.past {
-            font-size: 1.5rem;
-            color: #4b5563;
-            opacity: 0.3;
-        }
+  font-size: calc(var(--current-font-size) * 0.75);
+  color: #4b5563;
+  opacity: 0.3;
+}
 
-        .line.future {
-            font-size: 1.5rem;
-            color: #374151;
-            opacity: 0.2;
-        }
+.line.future {
+  font-size: calc(var(--current-font-size) * 0.75);
+  color: #374151;
+  opacity: 0.2;
+}
 
         .camera-panel {
             width: 320px;
@@ -986,7 +986,8 @@ let scrollInterval = null;
 let currentSpeed = 3500;
 let speedPreset = 'medium';
 let splitAtCommas = false;
-let currentFontSize = 3.5; 
+const DEFAULT_FONT_REM = 1.6;
+let currentFontSize = DEFAULT_FONT_REM;
 /* =========================
    Mobile Camera Drawer (NEW)
    - Mobile default: teleprompter-only (camera hidden)
@@ -1071,7 +1072,7 @@ let cameraEnabled = false;
 let selectedCameraId = null;
 let selectedMicId = null;
 
-const speedPresets = { slow: 3000, medium: 3500, fast: 1500 };
+const speedPresets = { slow: 4000, medium: 3000, fast: 1500 };
 
 // Setup screen elements
 const contentInput = document.getElementById('contentInput');
@@ -1151,6 +1152,8 @@ function updateCameraUI() {
 
 function updateFontSize() {
     currentFontSize = parseFloat(fontSizeRange.value);
+      // Safety clamp (optional)
+  currentFontSize = Math.max(0.75, Math.min(currentFontSize, 4));
     prompterContent.style.setProperty('--current-font-size', `${currentFontSize}rem`);
 }
 if (fontSizeRange) {
@@ -1710,7 +1713,7 @@ resetBtn.addEventListener('click', () => {
   inputSelectContainer.style.display = 'none';
   setBadge(false);
   
-  if (fontSizeRange) fontSizeRange.value = 3.5; 
+  if (fontSizeRange) fontSizeRange.value = DEFAULT_FONT_REM;
   updateFontSize();
 
   setupScreen.style.display = 'block';
