@@ -673,45 +673,128 @@
             }
         }
     
-/* --- Mobile scrolling fixes (iOS/Chrome emulation) --- */
-@media (max-width: 900px) {
-  /* Make the reading screen a fixed-height flex column */
-  #readingScreen, .reading-screen {
-    height: 100dvh;
-    max-height: 100dvh;
-    overflow: hidden;
-  }
+        /* =======================================================
+           MOBILE: TELEPROMPTER-ONLY + CAMERA DRAWER (NO DESKTOP IMPACT)
+           - On mobile, camera preview becomes a bottom drawer
+           - Teleprompter stays as the main full-height viewport
+           ======================================================= */
+        @media (max-width: 768px) {
 
-  /* This is the main scroll container on mobile (NOT the body) */
-  .content-area {
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    touch-action: pan-y;
-  }
+            /* Make the reading screen behave like an app view */
+            body.reading-mode {
+                height: 100dvh;
+                overflow: hidden;
+                overscroll-behavior: none;
+            }
 
-  /* Keep prompter scrollable, but don't trap the entire page */
-  .prompter {
-    flex: 1 1 auto !important;
-    min-height: 40vh;            /* ensures it remains usable */
-    max-height: 60vh;            /* prevents endless growth */
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    touch-action: pan-y;
-  }
+            .reading-screen {
+                height: 100dvh !important;
+                min-height: 100dvh !important;
+                padding-bottom: 0 !important;
+                overflow: hidden !important;
+            }
 
-  /* Prevent the camera panel from becoming too tall */
-  .camera-panel, .camera-preview, .video-panel {
-    max-height: 55vh;
-  }
+            /* Ensure flex children can shrink correctly (prevents scroll-trap) */
+            .content-area,
+            .prompter {
+                min-height: 0 !important;
+            }
 
-  video#videoPreview {
-    max-height: 40vh;
-  }
-}
+            /* Teleprompter gets the whole screen; it is the scroll container */
+            .content-area {
+                flex-direction: column !important;
+                height: 100% !important;
+                overflow: hidden !important;
+            }
+
+            .prompter {
+                flex: 1 1 auto !important;
+                height: 100% !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior: contain;
+                touch-action: pan-y;
+                padding: 0 0.5rem !important;
+            }
+
+            /* Hide the "Enable Camera" button in the main control bar on mobile
+               (camera access lives inside the drawer) */
+            #enableCameraBtn {
+                display: none !important;
+            }
+
+            /* Camera panel becomes a bottom drawer */
+            .camera-panel {
+                position: fixed !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                z-index: 9999 !important;
+                width: auto !important;
+                max-width: none !important;
+                margin: 0 !important;
+                border-radius: 16px 16px 0 0 !important;
+                transform: translateY(105%) !important;
+                transition: transform 180ms ease !important;
+                max-height: 78dvh !important;
+                overflow: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                padding: 0 !important;
+                display: block !important;
+            }
+
+            .camera-panel.open {
+                transform: translateY(0%) !important;
+            }
+
+            .camera-drawer-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.75rem;
+                padding: 0.85rem 1rem;
+                border-bottom: 1px solid rgba(255,255,255,0.08);
+                position: sticky;
+                top: 0;
+                background: #1f2937;
+                z-index: 1;
+            }
+
+            .camera-drawer-header .title {
+                font-weight: 900;
+                letter-spacing: 0.2px;
+            }
+
+            .camera-drawer-header .drawer-actions {
+                display: flex;
+                gap: 0.5rem;
+                align-items: center;
+            }
+
+            .camera-drawer-close {
+                background: rgba(255,255,255,0.10);
+                border: 1px solid rgba(255,255,255,0.10);
+                color: #fff;
+                border-radius: 10px;
+                padding: 0.45rem 0.75rem;
+                cursor: pointer;
+                font-weight: 800;
+            }
+
+            .camera-panel .camera-inner {
+                padding: 0.75rem 1rem 1rem;
+            }
+
+            /* Backdrop behind drawer */
+            #cameraDrawerBackdrop {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.45);
+                z-index: 9998;
+            }
+            #cameraDrawerBackdrop.show { display: block; }
+        }
 
 </style>
 </head>
@@ -818,6 +901,7 @@
             
 <button class="control-btn toggle-btn" id="mirrorBtn">🪞 Mirror</button>
 <button class="control-btn toggle-btn" id="flipBtn">↕ Vertical Flip</button>
+<button class="control-btn" id="cameraDrawerBtn" style="background:#111827;border:1px solid #374151;" title="Open camera drawer">📷 Camera</button>
 
 <div style="display:flex; align-items:center; gap:0.5rem;">
     <span style="color:#9ca3af; font-size:0.875rem;">A</span>
@@ -840,7 +924,15 @@
             </div>
             
             <div class="camera-panel">
-                <h3>Camera Preview</h3>
+                <div class="camera-drawer-header">
+    <div class="title">Camera</div>
+    <div class="drawer-actions">
+        <button class="control-btn" id="enableCameraBtnDrawer" style="background:#10b981;">📷 Enable Camera</button>
+        <button class="camera-drawer-close" id="cameraDrawerClose" type="button">Close</button>
+    </div>
+</div>
+<div class="camera-inner">
+    <h3>Camera Preview</h3>
                 <video id="videoPreview" autoplay muted playsinline></video>
                 <div class="camera-off-notice" id="cameraOffNotice" style="display:none;">Camera is OFF. Click <b>Enable Camera</b> to preview & record.</div>
                 <div class="info">
@@ -848,6 +940,7 @@
                     <p>• Recording timer shows duration</p>
                     <p>• Download when finished</p>
                     <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.75rem;">Video saves as .webm format</p>
+                </div>
                 </div>
             </div>
         </div>
@@ -890,7 +983,70 @@ let scrollInterval = null;
 let currentSpeed = 3500;
 let speedPreset = 'medium';
 let splitAtCommas = false;
-let currentFontSize = 3.5; // Initial font size in rem
+let currentFontSize = 3.5; 
+/* =========================
+   Mobile Camera Drawer (NEW)
+   - Mobile default: teleprompter-only (camera hidden)
+   - Camera button opens bottom drawer
+   - Enable camera button inside drawer reuses existing enableCamera logic
+   ========================= */
+const cameraDrawerBtn = document.getElementById('cameraDrawerBtn');
+const cameraDrawerClose = document.getElementById('cameraDrawerClose');
+const cameraDrawerBackdrop = document.getElementById('cameraDrawerBackdrop');
+const enableCameraBtnDrawer = document.getElementById('enableCameraBtnDrawer');
+
+function isMobileView() {
+  return window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+}
+
+function openCameraDrawer() {
+  const panel = document.querySelector('.camera-panel');
+  if (!panel) return;
+  panel.classList.add('open');
+  if (cameraDrawerBackdrop) cameraDrawerBackdrop.classList.add('show');
+}
+
+function closeCameraDrawer() {
+  const panel = document.querySelector('.camera-panel');
+  if (!panel) return;
+  panel.classList.remove('open');
+  if (cameraDrawerBackdrop) cameraDrawerBackdrop.classList.remove('show');
+}
+
+if (cameraDrawerBtn) {
+  cameraDrawerBtn.addEventListener('click', () => {
+    if (!isMobileView()) {
+      // Desktop/tablet: just scroll camera panel into view (no drawer)
+      const panel = document.querySelector('.camera-panel');
+      if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    openCameraDrawer();
+  });
+}
+
+if (cameraDrawerClose) cameraDrawerClose.addEventListener('click', closeCameraDrawer);
+if (cameraDrawerBackdrop) cameraDrawerBackdrop.addEventListener('click', closeCameraDrawer);
+
+if (enableCameraBtnDrawer) {
+  enableCameraBtnDrawer.addEventListener('click', () => {
+    // Reuse existing enableCamera button logic
+    if (enableCameraBtn) enableCameraBtn.click();
+  });
+}
+
+// When entering reading mode on mobile, keep camera drawer closed by default
+function applyMobileReadingDefaults() {
+  if (!isMobileView()) return;
+  closeCameraDrawer();
+}
+
+// Also ensure backdrop never gets stuck when resizing back to desktop
+window.addEventListener('resize', () => {
+  if (!isMobileView()) closeCameraDrawer();
+});
+
+// Initial font size in rem
 
 let mediaRecorder = null;
 let recordedChunks = [];
@@ -1318,7 +1474,7 @@ startBtn.addEventListener('click', async () => {
   setupScreen.style.display = 'none';
   readingScreen.style.display = 'flex';
   document.body.classList.add('reading-mode');
-  document.body.classList.add('reading-mode');
+  if (typeof applyMobileReadingDefaults === 'function') applyMobileReadingDefaults();
 
   document.querySelectorAll('#readingScreen .speed-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.speed === speedPreset);
@@ -1548,10 +1704,10 @@ resetBtn.addEventListener('click', () => {
   if (fontSizeRange) fontSizeRange.value = 3.5; 
   updateFontSize();
 
-  document.body.classList.remove('reading-mode');
   setupScreen.style.display = 'block';
   readingScreen.style.display = 'none';
   document.body.classList.remove('reading-mode');
+  if (typeof closeCameraDrawer === 'function') closeCameraDrawer();
   updateCameraUI();
 });
 
@@ -1561,5 +1717,6 @@ setBadge(false);
 updateCameraUI();
 if (fontSizeRange) updateFontSize();
 </script>
+    <div id="cameraDrawerBackdrop" aria-hidden="true"></div>
 </body>
 </html>
