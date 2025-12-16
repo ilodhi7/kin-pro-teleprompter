@@ -1191,6 +1191,7 @@ function updateTimeEstimate(lines) {
 }
 
 // CORRECTED parseContent function
+// CORRECTED parseContent function
 function parseContent(content) {
     // List of common abbreviations to prevent splitting (must be lowercase and include the period)
     const ABBREVIATIONS_SET = new Set([
@@ -1199,56 +1200,66 @@ function parseContent(content) {
         'jan.', 'feb.', 'mar.', 'apr.', 'jun.', 'jul.', 'aug.', 'sep.', 'oct.', 'nov.', 'dec.'
     ]);
     
-    // First, normalize all punctuation to have a space after them for consistent splitting detection
-    let text = content.replace(/([.?!,])(?=\S)/g, "$1 ");
-
-    // Define the separators based on the toggle setting, capturing the punctuation
-    let separators = splitAtCommas ? /([.?!,])\s+/g : /([.?!])\s+/g;
-    
-    // Split the content by the defined separators, keeping the punctuation mark in the result array
-    let potentialSegments = text.split(separators);
+    // STEP 1: Normalize content by splitting into stanza/paragraph blocks first, using multiple newlines.
+    // This addresses the issue of script/lyrics not using punctuation.
+    const stanzas = content.split(/\n{2,}/).filter(block => block.trim().length > 0);
 
     let finalLines = [];
-    let currentSegment = "";
-
-    for (let segment of potentialSegments) {
-        if (!segment || segment.trim().length === 0) continue;
-
-        let trimmedSegment = segment.trim();
-
-        // FIX: Explicitly ignore segments that are only punctuation marks
-        if (trimmedSegment.length === 1 && trimmedSegment.match(/[.?!,]/)) continue;
+    
+    // STEP 2: Process each stanza/block individually
+    for (const stanza of stanzas) {
+        // A. Replace single newlines within the stanza with a space for continuous reading
+        let text = stanza.replace(/\n/g, ' ');
         
-        // Check if the segment ends in a known abbreviation
-        let lastWordMatch = trimmedSegment.toLowerCase().match(/(\w+\.)$/);
-        let isAbbreviation = lastWordMatch && ABBREVIATIONS_SET.has(lastWordMatch[1]);
+        // B. Normalize all punctuation to have a space after them for consistent splitting detection
+        text = text.replace(/([.?!,])(?=\S)/g, "$1 ");
         
-        if (isAbbreviation) {
-            // It's an abbreviation, merge it with the current segment accumulator.
-            currentSegment += (currentSegment.length > 0 ? " " : "") + trimmedSegment;
-        } else {
-            // It's a real segment end. Add accumulated text + current segment to the final list.
-            if (currentSegment.length > 0) {
-                // If there's accumulated text, append the current segment to it
-                finalLines.push(currentSegment + (trimmedSegment.length > 0 ? " " + trimmedSegment : ""));
-                currentSegment = "";
+        // C. Define the separators based on the toggle setting, capturing the punctuation
+        let separators = splitAtCommas ? /([.?!,])\s+/g : /([.?!])\s+/g;
+        
+        // D. Split the block by the defined separators, keeping the punctuation mark in the result array
+        let potentialSegments = text.split(separators);
+
+        let currentSegment = "";
+
+        for (let segment of potentialSegments) {
+            if (!segment || segment.trim().length === 0) continue;
+
+            let trimmedSegment = segment.trim();
+
+            // Ignore segments that are only punctuation marks
+            if (trimmedSegment.length === 1 && trimmedSegment.match(/[.?!,]/)) continue;
+            
+            // Check if the segment ends in a known abbreviation
+            let lastWordMatch = trimmedSegment.toLowerCase().match(/(\w+\.)$/);
+            let isAbbreviation = lastWordMatch && ABBREVIATIONS_SET.has(lastWordMatch[1]);
+            
+            if (isAbbreviation) {
+                // It's an abbreviation, merge it with the current segment accumulator.
+                currentSegment += (currentSegment.length > 0 ? " " : "") + trimmedSegment;
             } else {
-                // Otherwise, the current segment is a standalone sentence
-                finalLines.push(trimmedSegment);
+                // It's a real segment end. Add accumulated text + current segment to the final list.
+                let segmentToPush = currentSegment + (trimmedSegment.length > 0 ? " " + trimmedSegment : "");
+                if (segmentToPush.trim().length > 0) {
+                    finalLines.push(segmentToPush.trim());
+                }
+                currentSegment = "";
             }
+        }
+        
+        // Push any leftover accumulated text from this stanza
+        if (currentSegment.length > 0) {
+            finalLines.push(currentSegment.trim());
         }
     }
     
-    // Push any leftover accumulated text
-    if (currentSegment.length > 0) {
-        finalLines.push(currentSegment);
-    }
-    
-    // Final cleanup: ensure segments end in punctuation if missing (the original failsafe)
+    // STEP 3: Final cleanup - ensure segments end in punctuation if missing (the original failsafe)
     return finalLines.map(s => {
         let trimmed = s.trim();
-        // Check if it ends with one of the allowed punctuations
-        if (trimmed.length > 0 && !trimmed.match(/[.?!,]$/)) {
+        // Check if it ends with one of the allowed punctuations or stage direction parentheses
+        if (trimmed.length > 0 && !trimmed.match(/[.?!,]$/) && !trimmed.match(/\)$/)) {
+             // If the line is only a stage direction like (lean in), don't add a period.
+            if (trimmed.match(/^\(.*\)$/)) return trimmed;
             return trimmed + '.';
         }
         return trimmed;
