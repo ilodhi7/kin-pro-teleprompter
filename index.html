@@ -1299,20 +1299,21 @@ function parseContent(content) {
   // - Filter empties
   // - Only add a period to long prose-like segments (prevents messing up lyrics)
   return finalLines
-    .map(s => (s ?? "").trim())
-    .filter(Boolean)
-    .map(s => {
-      if (isStageDirectionOnly(s)) return s;
+  .map(s => (s ?? "").trim())
+  .filter(Boolean)
+  .map(s => {
+    // Don't touch stage directions
+    if (/^\s*\(.*\)\s*$/.test(s)) return s;
 
-      // If it already ends with punctuation or a closing paren, leave it alone.
-      if (/[.?!,]$/.test(s) || /\)$/.test(s)) return s;
+    // If it already ends with punctuation (or a closing paren), leave it alone
+    if (/[.?!,]$/.test(s) || /\)$/.test(s)) return s;
 
-      // Heuristic: add punctuation only to long "prose" segments
-      const wordCount = s.split(/\s+/).filter(Boolean).length;
-      if (wordCount >= 12) return s + ".";
+    // Add a period only if it's more than one word (avoids dotting "Okay", "No", etc.)
+    const wordCount = s.split(/\s+/).filter(Boolean).length;
+    if (wordCount > 1) return s + ".";
 
-      return s;
-    });
+    return s;
+  });
 }
 
 
