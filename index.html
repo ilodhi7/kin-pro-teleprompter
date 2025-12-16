@@ -1194,82 +1194,125 @@ function updateTimeEstimate(lines) {
 // CORRECTED parseContent function
 // New, robust parseContent function
 function parseContent(content) {
-    // List of common abbreviations to prevent splitting (must be lowercase and include the period)
-    const ABBREVIATIONS_SET = new Set([
-        'mr.', 'mrs.', 'ms.', 'dr.', 'jr.', 'sr.', 'prof.', 'capt.', 'lt.', 'col.', 'gen.',
-        'st.', 'ave.', 'rd.', 'blvd.', 'inc.', 'co.', 'corp.', 'ltd.', 'etc.', 'i.e.', 'e.g.',
-        'jan.', 'feb.', 'mar.', 'apr.', 'jun.', 'jul.', 'aug.', 'sep.', 'oct.', 'nov.', 'dec.',
-        // Add multi-dot and common corporate forms to the set for explicit checking
-        'ph.d.', 'u.s.', 'u.k.', 'a.m.', 'p.m.', 'p.s.' 
-    ]);
-    
-    // STEP 1: Split content into Stanzas/Paragraphs (using two or more newlines)
-    const stanzas = content.split(/\n{2,}/).filter(block => block.trim().length > 0);
+  // Common abbreviations (lowercase, include trailing period)
+  const ABBREVIATIONS_SET = new Set([
+    "mr.", "mrs.", "ms.", "dr.", "jr.", "sr.", "prof.", "capt.", "lt.", "col.", "gen.",
+    "st.", "ave.", "rd.", "blvd.", "inc.", "co.", "corp.", "ltd.", "etc.", "jan.", "feb.", "mar.",
+    "apr.", "jun.", "jul.", "aug.", "sep.", "oct.", "nov.", "dec.", "i.e.", "e.g."
+  ]);
 
-    let finalLines = [];
-    
-    for (const stanza of stanzas) {
-        // STEP 2: Split each stanza into raw lines (using single newlines) - The Lyric Fix
-        const rawLines = stanza.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-        
-        for (const rawLine of rawLines) {
-            // Check if the raw line contains a terminal separator
-            if (rawLine.match(/[.?!]/) || (splitAtCommas && rawLine.match(/,/))) {
-                // If it contains terminal punctuation, run the robust sentence splitter
-                
-                // Normalize punctuation to have a space after them for consistent splitting detection
-                let text = rawLine.replace(/([.?!,])(?=\S)/g, "$1 ");
-                
-                let separators = splitAtCommas ? /([.?!,])\s+/g : /([.?!])\s+/g;
-                let potentialSegments = text.split(separators);
+  const normalize = (s) => (s ?? "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 
-                let currentSegment = "";
+  const isStageDirectionOnly = (s) => /^\s*\(.*\)\s*$/.test(s);
 
-                for (let segment of potentialSegments) {
-                    if (!segment || segment.trim().length === 0) continue;
+  const looksLikeDottedAbbrev = (token) => {
+    // Matches U.S. / i.e. / Ph.D. / e.g. etc.
+    // e.g., "U.S." => (letter dot){2,} OR mixed short segments like "Ph.D."
+    return /^([A-Za-z]\.){2,}$/.test(token) || /^([A-Za-z]{1,3}\.){2,}$/.test(token);
+  };
 
-                    let trimmedSegment = segment.trim();
+  const isAbbreviation = (token) => {
+    if (!token) return false;
+    const t = token.trim().toLowerCase();
+    if (ABBREVIATIONS_SET.has(t)) return true;
+    if (looksLikeDottedAbbrev(token.trim())) return true;
+    return false;
+  };
 
-                    // Ignore segments that are only punctuation marks
-                    if (trimmedSegment.length === 1 && trimmedSegment.match(/[.?!,]/)) continue;
-                    
-                    // Robust Abbreviation Check (Fix #2): Check if the last token is an abbreviation
-                    // This regex checks for words ending in a period or multi-dot forms.
-                    let lastTokenMatch = trimmedSegment.toLowerCase().match(/([a-z.]{1,}\.)$/);
-                    let isAbbreviation = lastTokenMatch && ABBREVIATIONS_SET.has(lastTokenMatch[1]);
-                    
-                    if (isAbbreviation) {
-                        currentSegment += (currentSegment.length > 0 ? " " : "") + trimmedSegment;
-                    } else {
-                        let segmentToPush = currentSegment + (trimmedSegment.length > 0 ? " " + trimmedSegment : "");
-                        if (segmentToPush.trim().length > 0) {
-                            finalLines.push(segmentToPush.trim());
-                        }
-                        currentSegment = "";
-                    }
-                }
-                
-                if (currentSegment.length > 0) {
-                    finalLines.push(currentSegment.trim());
-                }
+  // Split into stanza/paragraph blocks using blank lines (2+ newlines)
+  const stanzas = normalize(content)
+    .split(/\n{2,}/)
+    .map(s => s.trim())
+    .filter(Boolean);
 
-            } else {
-                // If no terminal punctuation (lyric line), treat the whole raw line as one segment
-                finalLines.push(rawLine);
-            }
+  const finalLines = [];
+
+  // Decide punctuation separators based on your toggle
+  const separatorRegex = () => (splitAtCommas ? /([.?!,])\s+/g : /([.?!])\s+/g);
+
+  for (const stanza of stanzas) {
+    // IMPORTANT CHANGE:
+    // Keep single newlines as separate lines (lyrics-friendly).
+    const rawLines = stanza
+      .split("\n")
+      .map(l => l.trim())
+      .filter(Boolean);
+
+    for (const rawLine of rawLines) {
+      // Leave stage directions intact: (pause), (lean in), etc.
+      if (isStageDirectionOnly(rawLine)) {
+        finalLines.push(rawLine);
+        continue;
+      }
+
+      // If the line has no punctuation at all, keep it as a single segment.
+      // (This is what you want for most lyrics.)
+      const hasSentencePunct = /[.?!]/.test(rawLine);
+      const hasComma = /,/.test(rawLine);
+      const shouldTrySplit =
+        hasSentencePunct || (splitAtCommas && hasComma);
+
+      if (!shouldTrySplit) {
+        finalLines.push(rawLine);
+        continue;
+      }
+
+      // Punctuation-aware splitting with abbreviation protection
+      const re = separatorRegex();
+      let lastIndex = 0;
+      let match;
+
+      while ((match = re.exec(rawLine)) !== null) {
+        const punctIndex = match.index;           // where the punctuation token starts
+        const punct = match[1];                   // ., ?, !, or , (if enabled)
+
+        // Candidate chunk includes punctuation itself
+        const candidate = rawLine.slice(lastIndex, punctIndex + 1);
+
+        // If punct is '.', ensure we are not splitting on an abbreviation like "Dr." or "U.S."
+        if (punct === ".") {
+          // Pull the token ending at the period inside the candidate
+          // Examples captured: "Dr." "i.e." "U.S." "Ph.D."
+          const tokenMatch = candidate.match(/([A-Za-z]+(?:\.[A-Za-z]+)*\.)\s*$/);
+          const token = tokenMatch ? tokenMatch[1] : null;
+
+          if (isAbbreviation(token)) {
+            // Skip splitting here; continue scanning.
+            continue;
+          }
         }
+
+        const chunk = candidate.trim();
+        if (chunk) finalLines.push(chunk);
+
+        lastIndex = punctIndex + 1;
+      }
+
+      // Remainder
+      const remainder = rawLine.slice(lastIndex).trim();
+      if (remainder) finalLines.push(remainder);
     }
-    
-    // STEP 3: Final cleanup - apply the failsafe period (if needed)
-    return finalLines.map(s => {
-        let trimmed = s.trim();
-        if (trimmed.length > 0 && !trimmed.match(/[.?!,]$/) && !trimmed.match(/\)$/)) {
-             // If the line is only a stage direction like (lean in), don't add a period.
-            if (trimmed.match(/^\(.*\)$/)) return trimmed;
-            return trimmed + '.';
-        }
-        return trimmed;
-    }).filter(s => s.length > 0);
+  }
+
+  // Final cleanup:
+  // - Trim
+  // - Filter empties
+  // - Only add a period to long prose-like segments (prevents messing up lyrics)
+  return finalLines
+    .map(s => (s ?? "").trim())
+    .filter(Boolean)
+    .map(s => {
+      if (isStageDirectionOnly(s)) return s;
+
+      // If it already ends with punctuation or a closing paren, leave it alone.
+      if (/[.?!,]$/.test(s) || /\)$/.test(s)) return s;
+
+      // Heuristic: add punctuation only to long "prose" segments
+      const wordCount = s.split(/\s+/).filter(Boolean).length;
+      if (wordCount >= 12) return s + ".";
+
+      return s;
+    });
 }
 
 
